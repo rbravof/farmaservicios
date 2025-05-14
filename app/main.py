@@ -271,48 +271,58 @@ def mostrar_setup_inicial(request: Request):
 
 @app.post("/setup-inicial")
 def setup_inicial(db: Session = Depends(get_db)):
-    # Verificar si ya existe una farmacia
-    if db.query(Farmacia).first():
-        return {"mensaje": "Ya hay registros, no se puede ejecutar nuevamente."}
+    try:
+        # Verificar si ya existe una farmacia
+        if db.query(Farmacia).first():
+            return {"mensaje": "Ya hay registros, no se puede ejecutar nuevamente."}
 
-    # Crear farmacia
-    farmacia = Farmacia(
-        rut="99999999-9",
-        razon_social="Farmacia Central",
-        direccion="Dirección de ejemplo",
-        region="Región Metropolitana",
-        comuna="Santiago",
-        telefono="123456789",
-        correo="admin@farmacia.cl"
-    )
-    db.add(farmacia)
-    db.commit()
-    db.refresh(farmacia)
+        print("🚀 Creando farmacia...")
+        farmacia = Farmacia(
+            rut="99999999-9",
+            razon_social="Farmacia Central",
+            direccion="Dirección de ejemplo",
+            region="Región Metropolitana",
+            comuna="Santiago",
+            telefono="123456789",
+            correo="admin@farmacia.cl"
+        )
+        db.add(farmacia)
+        db.commit()
+        db.refresh(farmacia)
+        print("✅ Farmacia creada.")
 
-    # Crear sucursal
-    sucursal = Sucursal(
-        id_farmacia=farmacia.id,
-        nombre="Sucursal Central",
-        direccion="Dirección Central",
-        telefono="123456789",
-        correo="sucursal@farmacia.cl"
-    )
-    db.add(sucursal)
-    db.commit()
-    db.refresh(sucursal)
+        print("🏪 Creando sucursal...")
+        sucursal = Sucursal(
+            id_farmacia=farmacia.id,
+            nombre="Sucursal Central",
+            direccion="Dirección Central",
+            telefono="123456789",
+            correo="sucursal@farmacia.cl"
+        )
+        db.add(sucursal)
+        db.commit()
+        db.refresh(sucursal)
+        print("✅ Sucursal creada.")
 
-    # Crear usuario admin
-    admin = Usuario(
-        nombre="Administrador",
-        usuario="admin",
-        contrasena="admin123",  # Puedes luego hashearla
-        rol="admin",
-        id_sucursal=sucursal.id_sucursal
-    )
-    db.add(admin)
-    db.commit()
+        print("👤 Creando usuario admin...")
+        admin = Usuario(
+            nombre="Administrador",
+            usuario="admin",
+            contrasena="admin123",  # Recuerda luego hashearla
+            rol="admin",
+            id_sucursal=sucursal.id_sucursal
+        )
+        db.add(admin)
+        db.commit()
+        print("✅ Usuario admin creado.")
 
-    return {"mensaje": "✅ Setup inicial completado con éxito"}
+        return {"mensaje": "✅ Setup inicial completado con éxito"}
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error en setup inicial: {e}")
+        return {"mensaje": f"❌ Error: {e}"}
+
 
 
 
