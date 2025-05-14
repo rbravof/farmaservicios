@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Usuarios - FarmaServicios</title>
+  <!-- DataTables CSS -->
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css"> 
+  <!-- jQuery y DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .contenedor-formulario {
+      width: 90%;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .titulo-formulario {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+
+    .fila-formulario {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+	table.dataTable {
+	  width: 100% !important;
+	}
+
+    .campo-formulario {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .campo-formulario label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .campo-formulario input,
+    .campo-formulario select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .boton-centrado {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .btn-crear {
+      background-color: #01485E;
+      color: white;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-crear:hover {
+      background-color: #02637a;
+    }
+
+    /* Grilla */
+    .tabla-usuarios {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+    }
+
+    .tabla-usuarios th, .tabla-usuarios td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .tabla-usuarios th {
+      background-color: #01485E;
+      color: white;
+    }
+
+	.icono-accion {
+	  cursor: pointer;
+	  margin: 0 5px;
+	  padding: 5px; /* Agregamos un poco de padding para que sea más fácil hacer hover */
+	  border-radius: 6px;
+	  transition: background-color 0.3s;
+	}
+
+	.icono-accion.editar:hover {
+	  background-color: #2E7D32; /* Verde fuerte */
+	  border-radius: 50%;
+	  padding: 8px;
+	  color: white;
+	  transition: background-color 0.3s ease;
+	}
+
+	.icono-accion.eliminar:hover {
+	  background-color: #C62828; /* Rojo fuerte */
+	  border-radius: 50%;
+	  padding: 8px;
+	  color: white;
+	  transition: background-color 0.3s ease;
+	}
+
+	.text-center {
+	  text-align: center !important;
+	}
+
+	.text-start {
+	  text-align: left !important;
+	}
+
+
+    /* Toast */
+    .toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #01485E;
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      padding: 16px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 1rem;
+    }
+
+    .toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    @keyframes fadein {
+      from { bottom: 10px; opacity: 0; }
+      to { bottom: 30px; opacity: 1; }
+    }
+
+    @keyframes fadeout {
+      from { bottom: 30px; opacity: 1; }
+      to { bottom: 10px; opacity: 0; }
+    }
+	
+	.fila-formulario {
+	  display: flex;
+	  gap: 20px;
+	  margin-bottom: 20px;
+	}
+	
+	.btn-cancelar {
+	  background-color: #e53935;
+	  color: white;
+	  padding: 12px 25px;
+	  font-size: 16px;
+	  border: none;
+	  border-radius: 8px;
+	  cursor: pointer;
+	  transition: background-color 0.3s ease;
+	}
+
+	.btn-cancelar:hover {
+	  background-color: #c62828;
+	}
+	
+	.contenedor-botones {
+	  display: flex;
+	  justify-content: center;
+	  gap: 10px;
+	  margin-top: 20px;
+	}
+	
+	.btn-volver {
+	  background-color: #607d8b;
+	  color: white;
+	  padding: 12px 25px;
+	  font-size: 16px;
+	  border: none;
+	  border-radius: 8px;
+	  cursor: pointer;
+	  margin-left: 15px;
+	}
+
+	.btn-volver:hover {
+	  background-color: #455a64;
+	}	
+
+	button { font-family: "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI", sans-serif; }
+
+	
+  </style>
+</head>
+<body>
+<div class="contenedor-formulario">
+  <h2 class="titulo-formulario">Administración de Usuarios</h2>
+
+  <form id="formulario-usuario" autocomplete="off">
+    <input type="text" name="fakeusernameremembered" style="display:none">
+    <input type="password" name="fakepasswordremembered" style="display:none"> 
+    <div class="fila-formulario">
+      <div class="campo-formulario">
+        <label for="farmacia">Farmacia:</label>
+        <select id="farmacia" name="farmacia" required></select>
+      </div>
+      <div class="campo-formulario">
+        <label for="sucursal">Sucursal:</label>
+        <select id="sucursal" name="sucursal" required>
+          <option value="">Seleccionar Sucursal</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fila-formulario">
+      <div class="campo-formulario">
+        <label for="rut">RUT:</label>
+        <input type="text" id="rut" name="rut" maxlength="10" required>
+      </div>
+      <div class="campo-formulario">
+        <label for="nombre">Nombre Completo:</label>
+        <input type="text" id="nombre" name="nombre" maxlength="40" required>
+      </div>
+      <div class="campo-formulario">
+        <label for="telefono">Teléfono:</label>
+        <input type="text" id="telefono" name="telefono" maxlength="9" required>
+      </div>
+    </div>
+
+    <div class="fila-formulario">
+	  <div class="campo-formulario">
+		<label for="usuario">Nombre de Usuario:</label>
+		<input type="text" id="usuario" name="usuario" maxlength="30" required autocomplete="off">
+	  </div>
+
+	  <div class="campo-formulario">
+		<label for="contraseña">Contraseña:</label>
+		<input type="password" id="contraseña" name="contraseña" maxlength="12" autocomplete="new-password">
+	  </div>
+      <div class="campo-formulario">
+        <label for="rol">Rol:</label>
+        <select id="rol" name="rol" required>
+          <option value="">Seleccionar Rol</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Químico Farmacéutico">Químico Farmacéutico</option>
+          <option value="Auxiliar de Farmacia">Auxiliar de Farmacia</option>
+          <option value="Ejecutivo de Venta">Ejecutivo de Venta</option>
+          <option value="Reponedor">Reponedor</option>
+          <option value="Ejecutivo SAC">Ejecutivo SAC</option>
+        </select>
+      </div>
+    </div>
+
+	<div class="contenedor-botones">
+	  <button type="submit" class="btn-crear" id="btn-guardar">➕ Crear Usuario</button>
+	  <button type="button" class="btn-volver" onclick="volverDashboard()">🏠 Volver al Dashboard</button>
+	  <button type="button" id="btn-cancelar" class="btn-cancelar" style="display: none;" onclick="cancelarEdicion()">❌ Cancelar Edición</button>
+	</div>
+
+  <!-- Grilla de Usuarios -->
+  <table class="tabla-usuarios display nowrap" id="tabla-usuarios">
+    <thead>
+      <tr>
+        <th>Farmacia</th>
+        <th>Sucursal</th>
+        <th>RUT</th>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Nombre de Usuario</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dinámico -->
+    </tbody>
+  </table>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let editandoUsuarioId = null;
+let modoEdicion = false;
+let idUsuarioEditar = null;
+
+async function cargarFarmacias() {
+  const select = document.getElementById('farmacia');
+  select.innerHTML = "<option value=''>Seleccionar Farmacia</option>";
+
+  try {
+    const response = await fetch('/api/farmacias/listar');
+    if (!response.ok) throw new Error("Error al cargar farmacias");
+
+    const farmacias = await response.json();
+
+    farmacias.forEach(f => {
+      const option = document.createElement('option');
+      option.value = f.id;
+      option.textContent = f.razon_social;
+      select.appendChild(option);
+    });
+
+  } catch (error) {
+    console.error("Error cargando farmacias:", error);
+    mostrarToast("Error al cargar farmacias", true);
+  }
+}
+
+
+function validarContraseña(contrasena) {
+  const tieneLongitudValida = contrasena.length >= 6 && contrasena.length <= 12;
+  const tieneNumero = /\d/.test(contrasena);
+  const tieneLetra = /[a-zA-Z]/.test(contrasena);
+
+  return tieneLongitudValida && tieneNumero && tieneLetra;
+}
+
+function volverDashboard() {
+  window.location.href = "/dashboard";
+}
+
+async function cargarDatosIniciales() {
+  const usuario = JSON.parse(localStorage.getItem('usuario'));
+  console.log("Usuario cargado desde localStorage:", usuario);
+
+  if (!usuario) {
+    console.error("No hay usuario en localStorage, redirigiendo a login");
+    window.location.href = '/login';
+    return;
+  }
+
+  limpiarFormulario();
+
+  const farmaciaSelect = document.getElementById('farmacia');
+  farmaciaSelect.disabled = false;
+  farmaciaSelect.innerHTML = "<option value=''>Seleccionar Farmacia</option>";
+
+  try {
+    const response = await fetch('/api/farmacias/listar');
+    if (!response.ok) throw new Error("Error al obtener farmacias");
+
+    const farmacias = await response.json();
+    farmacias.forEach(f => {
+      const option = document.createElement('option');
+      option.value = f.id;
+      option.textContent = f.razon_social;
+      farmaciaSelect.appendChild(option);
+    });
+
+    // NO seleccionar automáticamente ninguna
+    // NO cargar sucursales aún
+
+    cargarUsuarios();
+
+  } catch (error) {
+    console.error("Error al cargar farmacias:", error);
+  }
+}
+
+
+
+function validarRUT(rut) {
+  rut = rut.replace(/\./g, "").replace("-", "");
+  const cuerpo = rut.slice(0, -1);
+  let dv = rut.slice(-1).toUpperCase();
+
+  let suma = 0;
+  let multiplo = 2;
+
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo.charAt(i)) * multiplo;
+    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+  }
+
+  const dvEsperado = 11 - (suma % 11);
+  dv = dv === "K" ? 10 : dv === "0" ? 11 : parseInt(dv);
+
+  return dvEsperado === dv;
+}
+
+function limpiarFormulario() {
+  document.getElementById('rut').value = '';
+  document.getElementById('nombre').value = '';
+  document.getElementById('telefono').value = '';
+  document.getElementById('usuario').value = '';
+  document.getElementById('contraseña').value = '';
+  document.getElementById('rol').selectedIndex = 0;
+
+  const sucursalSelect = document.getElementById('sucursal');
+  sucursalSelect.innerHTML = "<option value=''>Seleccionar Sucursal</option>";
+
+  modoEdicion = false;
+  idUsuarioEditar = null;
+  document.getElementById("btn-cancelar").style.display = "none";
+  const boton = document.querySelector(".btn-crear");
+  boton.innerHTML = "➕ Crear Usuario";
+}
+
+async function crearUsuario() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const usuarioLogin = document.getElementById('usuario').value.trim();
+  const contraseña = document.getElementById('contraseña').value;
+  const rut = document.getElementById('rut').value.trim();
+  const telefono = document.getElementById('telefono').value.trim();
+  const rol = document.getElementById('rol').value;
+
+  const sucursalValue = document.getElementById('sucursal').value;
+  const id_sucursal = Number(sucursalValue);
+
+  if (!id_sucursal || isNaN(id_sucursal)) {
+    mostrarToast("Debes seleccionar una sucursal válida", true);
+    return;
+  }
+
+  const id_farmacia = document.getElementById('farmacia').value;
+
+  if (!validarRUT(rut)) {
+    mostrarToast('RUT inválido', true);
+    return;
+  }
+
+  if (!modoEdicion && !validarContraseña(contraseña)) {
+    mostrarToast('La contraseña debe tener letras y números', true);
+    return;
+  }
+  
+  if (modoEdicion && contraseña && !validarContraseña(contraseña)) {
+    mostrarToast('La nueva contraseña debe tener letras y números', true);
+    return;
+  }
+
+
+  const datos = {
+    nombre,
+    usuario: usuarioLogin,
+    rut,
+    telefono,
+    rol,
+    id_sucursal,
+    id_farmacia: parseInt(id_farmacia)
+  };
+  
+  if (!modoEdicion || (modoEdicion && contraseña.trim() !== "")) {
+    datos.contrasena = contraseña;
+  }
+
+
+  try {
+    let url = '/api/usuarios/crear';
+    let method = 'POST';
+
+    if (modoEdicion) {
+      url = `/api/usuarios/editar/${idUsuarioEditar}`;
+      method = 'PUT';
+    }
+
+    const response = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos)
+    });
+
+    if (response.ok) {
+      mostrarToast(modoEdicion ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+
+      // ✅ Esperar 200ms para asegurar que los datos se reflejen en la BD antes de recargar
+      setTimeout(() => {
+        limpiarFormulario();
+		document.getElementById("btn-cancelar").style.display = "none";
+        cargarUsuarios();
+      }, 200);
+      
+    } else {
+      const errorData = await response.json();
+      mostrarToast('Error: ' + (errorData.detail || 'No se pudo procesar.'), true);
+    }
+  } catch (error) {
+    mostrarToast('Error de conexión', true);
+  }
+}
+
+
+async function cargarUsuarios() {
+  const usuario = JSON.parse(localStorage.getItem('usuario'));
+
+  // ⚠️ Si existe una DataTable activa, destruirla antes
+  if ($.fn.DataTable.isDataTable('#tabla-usuarios')) {
+    $('#tabla-usuarios').DataTable().destroy();
+  }
+
+  const tbody = document.getElementById('tabla-usuarios').querySelector('tbody');
+  tbody.innerHTML = '';
+
+  try {
+    const response = await fetch('/api/usuarios/todos');
+    const usuarios = await response.json();
+	console.log("👥 Usuarios recibidos:", usuarios);
+    usuarios.forEach(u => {
+      const tr = document.createElement('tr');
+	  tr.innerHTML = `
+	    <td>${u.nombre_farmacia}</td>
+	    <td>${u.nombre_sucursal}</td>
+	    <td>${u.rut}</td>
+	    <td>${u.nombre}</td>
+	    <td>${u.telefono}</td>
+	    <td>${u.usuario}</td>
+	    <td>${u.rol}</td>
+	    <td>
+	  	  <span class="icono-accion editar" title="Editar usuario" onclick="editarUsuario('${u.id}')">✏️</span>
+	  	  <span class="icono-accion eliminar" title="Eliminar usuario" onclick="eliminarUsuario('${u.id}')">🗑️</span>
+	    </td>
+	  `;
+      tbody.appendChild(tr);
+   });
+
+    // ✅ Volver a inicializar DataTable
+    inicializarDataTableUsuarios();
+
+  } catch (error) {
+    console.error('Error al cargar usuarios:', error);
+  }
+}
+
+async function editarUsuario(id) {
+  try {
+    const response = await fetch(`/api/usuarios/obtener/${id}`);
+    if (!response.ok) throw new Error("No se pudo obtener el usuario");
+    const usuario = await response.json();
+
+    // 🔁 Carga las farmacias antes de asignar
+    await cargarFarmacias(); 
+
+    document.getElementById('farmacia').value = usuario.id_farmacia;
+    document.getElementById('farmacia').disabled = true; // 🔒 Deshabilita edición
+
+    await cargarSucursales(usuario.id_farmacia);
+
+    document.getElementById('rut').value = usuario.rut;
+    document.getElementById('nombre').value = usuario.nombre;
+    document.getElementById('telefono').value = usuario.telefono;
+    document.getElementById('usuario').value = usuario.usuario;
+    document.getElementById('contraseña').value = "";
+    document.getElementById('rol').value = usuario.rol;
+    document.getElementById('sucursal').value = usuario.id_sucursal;
+
+    modoEdicion = true;
+    idUsuarioEditar = id;
+
+    document.querySelector(".btn-crear").innerHTML = "✏️ Actualizar Usuario";
+    document.getElementById('btn-cancelar').style.display = 'inline-block';
+
+    mostrarToast("Editando usuario...");
+  } catch (error) {
+    console.error("Error al cargar usuario para editar:", error);
+    mostrarToast("Error al cargar usuario", true);
+  }
+}
+
+
+function cancelarEdicion() {
+  document.querySelector(".btn-crear").innerHTML = "➕ Crear Usuario";
+  limpiarFormulario();
+  cargarUsuarios();
+  mostrarToast("Edición cancelada");
+}
+
+async function cargarSucursales(id_farmacia) {
+  const sucursalSelect = document.getElementById('sucursal');
+  sucursalSelect.innerHTML = "<option value=''>Seleccionar Sucursal</option>";
+
+  try {
+    const response = await fetch(`/api/sucursales/por-farmacia/${id_farmacia}`);
+    console.log("Respuesta HTTP sucursales:", response.status);
+
+    if (!response.ok) {
+      console.error("Error HTTP al traer sucursales:", response.statusText);
+      mostrarToast("Error al cargar sucursales", true);
+      return;
+    }
+
+    const sucursales = await response.json();
+    console.log("✅ Sucursales recibidas:", sucursales);
+
+    if (!Array.isArray(sucursales) || sucursales.length === 0) {
+      mostrarToast("No hay sucursales disponibles para esta farmacia", true);
+      return;
+    }
+
+    sucursales.forEach(sucursal => {
+      if (!sucursal.id) {
+        console.warn("Sucursal inválida:", sucursal);
+        return;
+      }
+
+      const option = document.createElement('option');
+      option.value = sucursal.id; // ✅ ahora usamos 'id'
+      option.textContent = sucursal.nombre;
+      sucursalSelect.appendChild(option);
+    });
+
+    // Seleccionar la primera automáticamente
+    if (sucursales.length > 0) {
+      sucursalSelect.value = sucursales[0].id;
+      console.log("Sucursal preseleccionada:", sucursales[0].nombre);
+    }
+
+  } catch (error) {
+    console.error("❌ Error en cargarSucursales (catch):", error);
+    mostrarToast("Error al cargar sucursales", true);
+  }
+}
+
+async function eliminarUsuario(id) {
+  if (!confirm("¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.")) return;
+
+  try {
+    const response = await fetch(`/api/usuarios/eliminar/${id}`, { method: "DELETE" });
+    if (response.ok) {
+      mostrarToast("Usuario eliminado exitosamente");
+
+      // ✅ Esperar recarga correcta de la grilla
+      await cargarUsuarios();
+    } else {
+      const errorData = await response.json();
+      mostrarToast("Error: " + (errorData.detail || 'No se pudo eliminar.'), true);
+    }
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    mostrarToast("Error de conexión", true);
+  }
+}
+
+function mostrarToast(mensaje, error = false) {
+  const toast = document.getElementById('toast');
+  toast.style.backgroundColor = error ? '#e63946' : '#01485E';
+  toast.innerText = mensaje;
+  toast.classList.add('show');
+  setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await cargarDatosIniciales();
+
+  document.getElementById('formulario-usuario').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await crearUsuario();
+    inicializarDataTableUsuarios();  // Reinicia la grilla tras crear
+  });
+
+  document.getElementById("farmacia").addEventListener("change", async function () {
+    const idFarmacia = this.value;
+    if (idFarmacia) {
+      await cargarSucursales(idFarmacia);
+    } else {
+      document.getElementById("sucursal").innerHTML = "<option value=''>Seleccionar Sucursal</option>";
+    }
+  });
+});
+
+
+
+function inicializarDataTableUsuarios() {
+  $('#tabla-usuarios').DataTable({
+    destroy: true,
+    pageLength: 20,
+    lengthMenu: [20, 50, 100, 500, 1000],
+    language: {
+      url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+    },
+    createdRow: function(row, data, dataIndex) {
+      // Centramos todas las columnas
+      $('td', row).css('text-align', 'center');
+      
+    },
+    headerCallback: function(thead) {
+      // Centramos todas las cabeceras
+      $(thead).find('th').css('text-align', 'center');
+
+    }
+  });
+}
+
+
+
+</script>
+
+
+</body>
+</html>

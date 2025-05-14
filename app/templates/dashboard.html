@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard | FarmaServicios</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; display: flex; height: 100vh; }
+    .sidebar { background-color: #01485E; width: 264px; padding: 20px 10px; color: white; }
+    .sidebar h3 { font-size: 18px; margin-bottom: 20px; text-align: center; }
+    .sidebar a { display: block; color: white; padding: 10px 15px; text-decoration: none; border-radius: 6px; margin-bottom: 10px; cursor: pointer; }
+    .sidebar a:hover { background-color: #026a8c; }
+    .main { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; position: relative; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f8f8f8; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+    .header h2 { margin: 0; font-size: 24px; text-align: left; flex-grow: 1; }
+    .user-info { font-size: 14px; color: #555; text-align: right; }
+    .logo-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+    .logo-container img { width: 360px; opacity: 1; filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1)); }
+    .menu-dropdown { position: relative; }
+    .menu-dropdown .dropdown-content { display: none; flex-direction: column; margin-top: 5px; padding-left: 15px; }
+    .menu-dropdown .dropdown-content a { background-color: #026a8c; margin-bottom: 5px; border-radius: 4px; }
+    .menu-dropdown .dropdown-content a:hover { background-color: #038fb2; }
+    .logout-button { background-color: #c62828; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 20px; transition: background-color 0.3s ease; align-self: center; }
+    .logout-button:hover { background-color: #8e0000; }
+    .menu-dropdown.open > a { background-color: #026a8c; }
+	.kpi-container { display: flex; justify-content: space-between; margin: 30px 0; }
+	.kpi-card { background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; flex: 1; text-align: center; margin: 0 10px; font-size: 16px; }
+	.kpi-card span { display: block; font-size: 22px; font-weight: bold; margin-top: 10px; color: #01485E; }
+	.chart-container { background: white; border-radius: 12px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+	.sidebar { background-color: #01485E; width: 264px; padding: 20px 10px; color: white; position: relative; } .cerrar-sesion-sidebar { position: absolute; bottom: 20px; left: 10px; right: 10px; width: calc(100% - 20px); background-color: #c62828; color: white; text-align: center; padding: 10px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; } .cerrar-sesion-sidebar:hover { background-color: #8e0000; }
+
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h3>Menú</h3>
+		<div class="menu-dropdown" id="menu-paciente">
+		  <a href="#" onclick="togglePaciente()">📄 Ficha de Paciente ▼</a>
+		  <div class="dropdown-content" id="paciente-dropdown">
+			<a href="/listado-pacientes">📋 Registro de Pacientes</a>
+			<a href="/ver-vencimientos">⏳ Ver Vencimientos</a>
+			<a href="/api/tratamientos/tratamientos-vencidos">📛 Tratamientos Vencidos</a>
+			<a href="/registro_contacto" id="menu-contactos">📝 Registro de Contactos</a>
+		  </div>
+		</div>
+    <div class="menu-dropdown" id="menu-admin">
+      <a href="#" onclick="toggleDropdown()">⚙️ Administración ▼</a>
+      <div class="dropdown-content" id="admin-dropdown">
+        <a href="/farmacias">🏥 Farmacias</a>
+        <a href="/sucursales">🔧 Sucursales</a>
+        <a href="/formulario_usuario">👤 Usuarios</a>
+        <div class="menu-dropdown">
+          <a href="#" onclick="toggleSubCatalogo(event)">💊 Catálogo ▼</a>
+          <div class="dropdown-content" id="subcatalogo-dropdown">
+            <a href="/catalogo/mantenedor" class="sub-menu-card">
+              <div class="icon">📦</div>
+              <h4 style="font-weight: normal;">Mantenedor de Productos</h4>
+            </a>
+            <a href="/catalogo/carga-masiva" class="sub-menu-card">
+              <div class="icon">📥</div>
+              <h4 style="font-weight: normal;">Carga Masiva</h4>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+	<a href="#" class="cerrar-sesion-sidebar" onclick="confirmarCerrarSesion()">🚪 Cerrar sesión</a>
+  </div>
+  <div class="main">
+	<div class="header">
+	  <div style="display: flex; align-items: center;">
+		<img src="/static/img/logo.png" alt="Logo FarmaServicios" style="height: 40px;">
+	  </div>
+	  <div class="user-info">
+		<div id="usuario-header" style="font-weight: bold; font-size: 16px; margin-bottom: 4px;">
+		  Bienvenido (a), <span id="nombre-usuario"></span>
+		</div>
+		<div id="fecha-actual"></div>
+		<div id="nombre-sucursal" style="font-size: 13px; color: #888; margin-top: 2px;"></div>
+	  </div>
+	</div>
+
+	<!-- LOGO <div class="logo-container">	  <img src="/static/img/logo.png" alt="Logo FarmaServicios">	</div>-->	
+	<!-- 🔢 KPIs PRINCIPALES -->
+	<div class="row kpi-container">
+	  <div class="kpi-card">👥 Renovaciones este mes<br><span id="kpi-renovados">--</span></div>
+	  <div class="kpi-card">❌ No Renovados este mes<br><span id="kpi-no-renovados">--</span></div>
+	  <div class="kpi-card">💰 Ventas (CLP)<br><span id="kpi-ventas">--</span></div>
+	  <div class="kpi-card">📉 Pérdidas estimadas<br><span id="kpi-perdidas">--</span></div>
+	  <div class="kpi-card">📞 No Contactados<br><span id="kpi-no-contactados">--</span></div>
+	  <div class="kpi-card">💸 Dinero no recaudado<br><span id="kpi-no-recaudado">--</span></div>
+	</div>
+	
+	<div class="chart-container">
+	  <canvas id="graficoVentas" height="90"></canvas>
+	</div>
+  </div>
+  <script>
+    function toggleDropdown() {
+      const dropdown = document.getElementById("admin-dropdown");
+      dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
+    }
+    function togglePaciente() {
+      const dropdown = document.getElementById("paciente-dropdown");
+      const parent = dropdown.parentElement;
+      const isOpen = dropdown.style.display === "flex";
+      dropdown.style.display = isOpen ? "none" : "flex";
+      parent.classList.toggle("open", !isOpen);
+    }
+    function toggleSubCatalogo(event) {
+      event.stopPropagation();
+      const subDropdown = document.getElementById("subcatalogo-dropdown");
+      subDropdown.style.display = subDropdown.style.display === "flex" ? "none" : "flex";
+    }
+    function aplicarPermisosPorRol() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+      const rol = usuario?.rol?.toLowerCase() || "";
+      const menuPaciente = document.getElementById("menu-paciente");
+      const menuAdmin = document.getElementById("menu-admin");
+      const catalogoMantenedor = document.querySelector('a[href="/catalogo/mantenedor"]');
+      const catalogoCarga = document.querySelector('a[href="/catalogo/carga-masiva"]');
+      const menuContacto = document.getElementById("menu-contactos");
+
+      if (rol === "administrador") {
+        menuPaciente.style.display = "block";
+        menuAdmin.style.display = "block";
+      } else if (rol === "químico farmacéutico") {
+        menuPaciente.style.display = "block";
+        menuAdmin.style.display = "block";
+        document.querySelector('a[href="/farmacias"]').style.display = "none";
+        document.querySelector('a[href="/sucursales"]').style.display = "none";
+        catalogoMantenedor.style.display = "block";
+        catalogoCarga.style.display = "block";
+        menuContacto.style.display = "none";
+      } else if (rol === "auxiliar de farmacia") {
+        menuPaciente.style.display = "block";
+        menuAdmin.style.display = "none";
+        menuContacto.style.display = "none";
+      } else {
+        menuPaciente.style.display = "none";
+        menuAdmin.style.display = "none";
+      }
+    }
+
+    function actualizarFechaHora() {
+      const fecha = new Date();
+      const opcionesFecha = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const fechaFormateada = fecha.toLocaleDateString('es-CL', opcionesFecha);
+      const horaFormateada = fecha.toLocaleTimeString('es-CL', opcionesHora);
+      document.getElementById("fecha-actual").innerText = `${fechaFormateada} ${horaFormateada}`;
+    }
+    function cargarNombreSucursal() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+      const nombre = usuario?.nombre_sucursal || "Sucursal Principal";
+      document.getElementById("nombre-sucursal").innerText = `🏥 ${nombre}`;
+    }
+	
+	document.addEventListener("DOMContentLoaded", () => {
+	  const usuario = JSON.parse(localStorage.getItem("usuario"));
+	  if (usuario && usuario.usuario) {
+		document.getElementById("nombre-usuario").textContent = usuario.usuario;
+		aplicarPermisosPorRol();
+	  } else {
+		window.location.href = "/login";
+		return; // 🔒 Previene ejecución innecesaria
+	  }
+
+	  // Cargar nombre sucursal y fecha/hora
+	  actualizarFechaHora();
+	  setInterval(actualizarFechaHora, 1000);
+	  cargarNombreSucursal();
+
+	  // KPIs mock
+	  document.getElementById("kpi-renovados").innerText = "38";
+	  document.getElementById("kpi-no-renovados").innerText = "12";
+	  document.getElementById("kpi-ventas").innerText = "$482.000";
+	  document.getElementById("kpi-perdidas").innerText = "$152.000";
+	  document.getElementById("kpi-no-contactados").innerText = "7";
+	  document.getElementById("kpi-no-recaudado").innerText = "$89.000";
+
+	  // Gráfico de ventas y pérdidas
+	  const ctx = document.getElementById("graficoVentas").getContext("2d");
+	  new Chart(ctx, {
+		type: "line",
+		data: {
+		  labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+		  datasets: [
+			{
+			  label: "Ventas (CLP)",
+			  data: [82000, 91000, 120000, 105000, 76000, 88000],
+			  borderColor: "#28a745",
+			  backgroundColor: "rgba(40, 167, 69, 0.2)",
+			  tension: 0.3
+			},
+			{
+			  label: "Pérdidas (CLP)",
+			  data: [24000, 32000, 18000, 26000, 30000, 28000],
+			  borderColor: "#dc3545",
+			  backgroundColor: "rgba(220, 53, 69, 0.2)",
+			  tension: 0.3
+			}
+		  ]
+		},
+		options: {
+		  responsive: true,
+		  plugins: {
+			legend: { position: "top" },
+			title: { display: true, text: "Ventas y Pérdidas por Tratamientos (últimos 6 meses)" }
+		  }
+		}
+	  });
+	});
+
+	function confirmarCerrarSesion() {
+		Swal.fire({
+		  title: '¿Cerrar sesión?',
+		  text: "Serás redirigido al inicio de sesión.",
+		  icon: 'warning',
+		  showCancelButton: true,
+		  confirmButtonColor: '#d33',
+		  cancelButtonColor: '#3085d6',
+		  confirmButtonText: 'Sí, cerrar sesión',
+		  cancelButtonText: 'Cancelar'
+		}).then((result) => {
+		  if (result.isConfirmed) {
+			localStorage.clear();
+			window.location.href = "/login";
+		  }
+		});
+	}
+</script>
+</body>
+</html>

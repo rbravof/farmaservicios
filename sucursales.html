@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administración | Sucursales</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      color: #01485E;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #00796B;
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004D40;
+    }
+
+    .success-message {
+      display: none;
+      margin-top: 20px;
+      color: green;
+      text-align: center;
+    }
+
+    .error-message {
+      display: none;
+      margin-top: 20px;
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Registrar Nueva Sucursal</h2>
+
+    <form id="sucursal-form">
+      <label for="nombre">Nombre de la Sucursal</label>
+      <input type="text" id="nombre" required>
+
+      <label for="direccion">Dirección</label>
+      <input type="text" id="direccion" required>
+
+      <label for="region">Región</label>
+      <input type="text" id="region" required>
+
+      <button type="submit">Guardar Sucursal</button>
+    </form>
+
+    <p class="success-message" id="success-msg">Sucursal registrada correctamente ✅</p>
+    <p class="error-message" id="error-msg">Error al registrar la sucursal ❌</p>
+  </div>
+
+  <script>
+    const form = document.getElementById("sucursal-form");
+    const successMsg = document.getElementById("success-msg");
+    const errorMsg = document.getElementById("error-msg");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const data = {
+        nombre: document.getElementById("nombre").value,
+        direccion: document.getElementById("direccion").value,
+        region: document.getElementById("region").value,
+      };
+
+      fetch("http://127.0.0.1:8000/admin/sucursales/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (response.ok) {
+          successMsg.style.display = "block";
+          errorMsg.style.display = "none";
+          form.reset();
+        } else {
+          throw new Error("Error");
+        }
+      })
+      .catch(() => {
+        successMsg.style.display = "none";
+        errorMsg.style.display = "block";
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Contactos</title>
+  <link rel="icon" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding: 40px; }
+    .container { max-width: 1200px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    h2 { color: #01485E; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+    .btn-volver { margin-bottom: 20px; background-color: #01485E; color: white; padding: 10px 20px; border: none;  border-radius: 8px; cursor: pointer; }
+    .btn-volver:hover { background-color: #026a8c; }
+    .fila-verde { background-color: #e0f8e0 !important; }
+    .fila-roja { background-color: #ffe3e3 !important; }
+    .btn-contacto { background-color: #25D366 !important; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+	.btn-contacto:hover { background-color: #1ebe5d !important; }
+    #tablaContactos thead th { text-align: center; }
+    #tablaContactos td { text-align: center; }
+    #tablaContactos td:nth-child(3) { text-align: left; }  /* Medicamento */
+    #tablaContactos td:nth-child(4) { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📞 Registro de Contactos</h2>
+    <button onclick="window.location.href='/dashboard'" class="btn-volver">⬅️ Volver al Dashboard</button>
+    <table id="tablaContactos" class="display nowrap" style="width:100%">
+		<thead>
+		  <tr>
+			<th>RUT</th>
+			<th>Medicamento</th>
+			<th>Fecha Fin</th>
+			<th>Usuario</th>
+			<th>Medio de Contacto</th>
+			<th>Acciones</th>
+		  </tr>
+		</thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script>
+  function formatearFechaHora(fechaISO) {
+    const f = new Date(fechaISO);
+    const d = String(f.getDate()).padStart(2, '0');
+    const m = String(f.getMonth() + 1).padStart(2, '0');
+    const y = f.getFullYear();
+    const h = String(f.getHours()).padStart(2, '0');
+    const min = String(f.getMinutes()).padStart(2, '0');
+    return `${d}-${m}-${y} ${h}:${min}`;
+  }
+
+  async function cargarYMostrarContactos() {
+    try {
+      const dias = parseInt(document.getElementById("filtroDias").value || 5);
+      const res = await fetch("/api/tratamientos/historial-contactos");
+      const contactos = await res.json();
+  
+      console.log("🟢 Datos para DataTable:", contactos);
+  
+      const fechaLimite = new Date();
+      fechaLimite.setDate(fechaLimite.getDate() - dias);
+  
+      const filtrados = contactos.filter(c => {
+        const f = new Date(c.fecha_contacto);
+        return f >= fechaLimite;
+      });
+  
+      const tabla = $('#tablaContactos').DataTable();
+      tabla.clear();
+  
+      filtrados.forEach(item => {
+        tabla.row.add(item);
+      });
+  
+      tabla.draw();
+    } catch (error) {
+      console.error("❌ Error al cargar contactos:", error);
+    }
+  }
+
+	document.addEventListener("DOMContentLoaded", () => {
+	  const $comboFiltro = document.createElement("select");
+	  $comboFiltro.id = "filtroDias";
+	  $comboFiltro.innerHTML = `
+		<option value="5">Últimos 5 días</option>
+		<option value="3">Últimos 3 días</option>
+		<option value="1">Último día</option>
+	  `;
+
+	  const observer = new MutationObserver(() => {
+		const contenedorSearch = document.querySelector("#tablaContactos_filter");
+		if (contenedorSearch && !document.getElementById("filtroDias")) {
+		  contenedorSearch.insertBefore($comboFiltro, contenedorSearch.firstChild);
+		  $comboFiltro.style.marginRight = "20px";
+		  $comboFiltro.style.padding = "6px";
+		  $comboFiltro.style.borderRadius = "6px";
+		  $comboFiltro.addEventListener("change", cargarYMostrarContactos);
+		  observer.disconnect();
+		  cargarYMostrarContactos(); // ✅ Se ejecuta solo cuando el combo está disponible
+		}
+	  });
+
+	  observer.observe(document.body, { childList: true, subtree: true });
+
+	  $('#tablaContactos').DataTable({
+		data: [],
+		columns: [
+		  { data: 'rut_paciente', title: 'Rut Paciente', className: 'text-center' },
+		  { data: 'nombre_medicamento', title: 'Medicamento', className: 'text-left' },
+		  {
+			data: 'fecha_contacto',
+			title: 'Fecha de Contacto',
+			className: 'text-center',
+			render: function (data) {
+			  return data ? formatearFechaHora(data) : "-";
+			}
+		  },
+		  { data: 'usuario', title: 'Usuario', className: 'text-center' },
+		  { data: 'tipo_contacto', title: 'Medio de Contacto', className: 'text-center' },
+		  {
+			data: null,
+			title: 'Acciones',
+			className: 'text-center',
+			render: function (data) {
+			  const fono = data.telefono_usuario?.replace(/\D/g, "") || "XXXXXXXXX";
+			  const mensaje = `Hola ${data.usuario}, ¿por qué no realizaste el contacto para el paciente ${data.rut_paciente} con medicamento ${data.nombre_medicamento}?`;
+			  const link = `https://wa.me/56${fono}?text=${encodeURIComponent(mensaje)}`;
+			  return `<button class="btn-contacto" onclick="window.open('${link}', '_blank')"><i class="fab fa-whatsapp"></i> WhatsApp</button>`;
+			}
+		  }
+		],
+		dom: 'Bfrtip',
+		buttons: ['excel', 'pdf', 'print'],
+		language: { url: "/static/js/es-ES.json" }
+	  });
+	});
+
+
+</script>
+
+
+
+</body>
+</html>

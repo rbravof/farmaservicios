@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tratamiento del Paciente</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <style>
+    .acciones-botones { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
+	btn-accion { padding: 6px 10px; font-size: 14px; border-radius: 4px; border: none; cursor: pointer; }
+	.btn-accion.editar { background-color: #ffc107; color: black; }
+	.btn-accion.eliminar { background-color: #dc3545; color: white; }
+	.btn-accion.receta { background-color: #6c757d; color: white; }
+	.btn-accion.subir { background-color: #007bff; color: white; }
+    .btn-accion { padding: 6px 8px; font-size: 16px; border-radius: 4px; border: none; cursor: pointer; background: none; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding: 40px; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #01485E; }
+    .form-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .form-group { flex: 1; display: flex; flex-direction: column; position: relative; }
+    label { font-weight: bold; margin-bottom: 5px; }
+    input, select { padding: 10px; border: 2px solid #ccc; border-radius: 6px; font-size: 15px; }
+    .actions { text-align: center; margin-top: 20px; }
+    button { background-color: #28a745; border: none; color: white; padding: 12px 25px; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+    button:hover { filter: brightness(90%); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #01485E; color: white; }
+    #popup-receta { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; width: 700px; box-shadow: 0 0 15px rgba(0,0,0,0.3); border-radius: 10px; z-index: 9999; }
+    #precio_venta { text-align: center; }
+    #popup-receta input { margin-top: 10px; }
+	#tabla-medicamentos_wrapper { font-size: 14px; }
+	#tabla-medicamentos thead th { background-color: #01485E; color: white; font-weight: bold; }
+	#tabla-medicamentos tbody td { vertical-align: middle; text-align: center; }
+	#tabla-medicamentos tbody td:nth-child(1) { text-align: left; }
+	#tabla-medicamentos thead th { text-align: center; }
+	.btn-accion {  padding: 4px 8px;  font-size: 14px;  border-radius: 4px;  border: none;  cursor: pointer; }
+	.btn-accion.editar {background-color: #ffc107; color: black;}
+	.btn-accion.eliminar {background-color: #dc3545; color: white;}
+	#btn-cancelar-edicion { display: none; background-color: #6c757d; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>💊 Tratamiento del Paciente</h2>
+
+    <form id="form-tratamiento">
+        <div class="form-row">
+          <div class="form-group" style="flex: 0.6;">
+            <label for="codigo_barra">Código de Barra</label>
+            <input type="text" id="codigo_barra" name="codigo_barra" placeholder="Ej: 7801234567890" autocomplete="off" />
+          </div>
+          <div class="form-group" style="flex: 2; position: relative;">
+            <label for="nombre_medicamento">Nombre del Medicamento</label>
+            <input type="text" id="nombre_medicamento" name="nombre_medicamento" placeholder="Buscar medicamento..." autocomplete="off" />
+            <div id="sugerencias" style="background:white;border:1px solid #ccc;position:absolute;z-index:999;width:100%;display:none;box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+          </div>
+        </div>
+		<div class="form-row">
+		  <div class="form-group">
+			<label for="principio_activo">Principio Activo</label>
+			<input type="text" id="principio_activo" name="principio_activo" readonly style="width: 58ch; background-color: #f0f0f0; color: #555;" />
+		  </div>
+		  <div class="form-group">
+			<label for="laboratorio">Laboratorio</label>
+			<input type="text" id="laboratorio" name="laboratorio" readonly style="width: 26ch; background-color: #f0f0f0; color: #555;" />
+		  </div>
+		  <div class="form-group">
+			<label for="precio_venta">Precio Venta</label>
+			<input type="text" id="precio_venta" name="precio_venta" readonly style="width: 10ch; background-color: #f0f0f0; color: #555;" />
+		  </div>
+		</div>
+		<div class="form-row">
+		  <div class="form-group">
+			<label for="cantidad_por_caja">Cantidad por Caja</label>
+			<input type="number" id="cantidad_por_caja" name="cantidad_por_caja" />
+		  </div>
+		  <div class="form-group">
+			<label for="dosis_diaria">Dosis Diaria</label>
+			<input type="number" id="dosis_diaria" name="dosis_diaria" />
+		  </div>
+		  <div class="form-group">
+			<label for="duracion_dias">Días de Tratamiento</label>
+			<input type="text" id="duracion_dias" name="duracion_dias" readonly />
+		  </div>
+		</div>
+      <input type="hidden" id="fecha_fin" name="fecha_fin" />
+      <input type="hidden" id="rut_paciente" name="rut_paciente" />
+	  <input type="hidden" id="nombre_paciente" name="nombre_paciente" />
+
+      <div class="form-row" style="justify-content: center; gap: 20px; margin-top: 10px;">
+        <button type="submit" id="btn-guardar" style="background-color: #28a745;">💾 Guardar Tratamiento</button>
+        <button type="button" onclick="finalizarTratamiento()" style="background-color: #17a2b8;">✅ Finalizar Tratamiento</button>
+        <button type="button" id="btn-cancelar-edicion" onclick="cancelarEdicion()">🚫 Cancelar Edición</button>
+      </div>
+    </form>
+
+    <table id="tabla-medicamentos" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Medicamento</th>
+          <th>Cantidad</th>
+          <th>Dosis</th>
+          <th>Días</th>
+          <th>Fecha Fin</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+  </div>
+		<div id="popup-receta" style="width: 600px;">
+		  <h3>📌 Adjuntar Receta</h3>
+		  <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+			<label for="input-receta" style="font-weight: bold;">Selecciona un archivo:</label>
+			<input type="file" id="input-receta" name="archivo" accept=".pdf,.jpg,.jpeg,.png" style="padding: 10px; font-size: 15px;" />
+			<input type="hidden" id="rut_paciente_popup" name="rut_paciente" />
+			<div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
+			  <button onclick="subirReceta()" style="background-color: #28a745; color: white; padding: 10px 20px; font-weight: bold; border: none; border-radius: 6px;">
+				🧾 Subir Receta
+			  </button>
+			  <button onclick="cerrarPopupReceta()" style="background-color: #dc3545; color: white; padding: 10px 20px; font-weight: bold; border: none; border-radius: 6px;">
+				❌ Cerrar
+			  </button>
+			</div>
+		  </div>
+		</div>
+	<div id="toast" style=" display: none; position: fixed; bottom: 20px; right: 20px; background-color: #323232; color: white; padding: 12px 20px; border-radius: 6px; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 9999;"></div>
+	
+	<div id="visor-recetas" style="
+	  display: none;
+	  position: fixed;
+	  top: 50%;
+	  left: 50%;
+	  transform: translate(-50%, -50%);
+	  background: white;
+	  padding: 20px;
+	  width: 600px;
+	  max-height: 500px;
+	  overflow-y: auto;
+	  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+	  border-radius: 10px;
+	  z-index: 9999;
+	">
+	  <h3>📁 Recetas del Paciente</h3>
+	  <div id="lista-recetas" style="margin-top: 10px;"></div>
+
+	  <hr style="margin: 20px 0;">
+	  <label><strong>Subir nueva receta:</strong></label>
+	  <input type="file" id="nueva-receta-input" accept=".pdf,.jpg,.jpeg,.png" />
+	  <button onclick="subirNuevaRecetaDesdeVisor()" style="margin-top: 10px;">📤 Subir</button>
+
+	  <div style="text-align: right; margin-top: 20px;">
+		<button onclick="cerrarVisorRecetas()" style="background-color: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 6px;">❌ Cerrar</button>
+	  </div>
+	</div>
+
+
+	
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+	const urls = {
+	  CATALOGO_BUSCAR_NOMBRE: (nombre) => `/api/catalogo/buscar-productos/${nombre}`,
+	  TRATAMIENTOS_GUARDAR: "/api/tratamientos/guardar",
+	};  
+
+    function showToast(mensaje, tipo = "success") {
+      Toastify({
+        text: mensaje,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: tipo === "success" ? "#28a745" : "#dc3545",
+        close: true
+      }).showToast();
+    }
+
+	function formatearFecha(fechaISO) {
+		if (!fechaISO) return "";
+		const fecha = new Date(fechaISO);
+		const dia = String(fecha.getDate()).padStart(2, '0');
+		const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+		const anio = fecha.getFullYear();
+		return `${dia}-${mes}-${anio}`;
+	}
+
+	function mostrarToast(mensaje) {
+	  const toast = document.getElementById("toast");
+	  toast.textContent = mensaje;
+	  toast.style.display = "block";
+	  setTimeout(() => {
+		toast.style.display = "none";
+	  }, 3000);
+	}
+
+    function cancelarEdicion() {
+      document.getElementById("form-tratamiento").reset();
+      document.getElementById("nombre_medicamento").readOnly = false;
+      document.getElementById("btn-cancelar-edicion").style.display = "none";
+      window.tratamientoEnEdicion = null;
+      const rut = localStorage.getItem("rutPacienteTratamiento");
+      document.getElementById("rut_paciente").value = rut;
+      document.getElementById("duracion_dias").value = "";
+      document.getElementById("fecha_fin").value = "";
+    }	
+
+	document.addEventListener("DOMContentLoaded", () => {
+	  const cantidadInput = document.getElementById("cantidad_por_caja");
+	  const dosisInput = document.getElementById("dosis_diaria");
+	  const duracionInput = document.getElementById("duracion_dias");
+	  const fechaFinInput = document.getElementById("fecha_fin");
+	  const rutGuardado = localStorage.getItem("rutPacienteTratamiento");
+	  const nombreGuardado = localStorage.getItem("nombrePacienteTratamiento");
+
+	  if (rutGuardado) {
+		document.getElementById("rut_paciente").value = rutGuardado;
+		cargarTratamientos(rutGuardado);
+	  }
+	  if (nombreGuardado) {
+		document.getElementById("nombre_paciente").value = nombreGuardado;  // <-- nuevo
+	  }
+
+	function subirNuevaRecetaDesdeVisor() {
+	  const input = document.getElementById("nueva-receta-input");
+	  const archivo = input.files[0];
+	  const rut = localStorage.getItem("rutPacienteReceta");
+	  const nombre = document.getElementById("nombre_paciente").value;
+
+	  if (!archivo || !rut || !nombre) {
+		alert("⚠️ Faltan datos o archivo.");
+		return;
+	  }
+
+	  const formData = new FormData();
+	  formData.append("file", archivo);
+	  formData.append("rut_paciente", rut);
+	  formData.append("nombre_paciente", nombre);
+
+	  fetch("/api/tratamientos/subir-receta", {
+		method: "POST",
+		body: formData
+	  })
+		.then(async res => {
+		  if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.detail || "Error al subir receta");
+		  }
+		  return res.json();
+		})
+		.then(() => {
+		  showToast("✅ Receta subida");
+		  abrirVisorRecetas(rut); // recargar lista
+		  cargarTratamientos(rut); // actualizar grilla
+		})
+		.catch(err => {
+		  console.error("❌ Error:", err);
+		  showToast("Error al subir receta", "error");
+		});
+	}
+
+	function eliminarReceta(nombreArchivo) {
+	  if (!confirm("¿Estás seguro de eliminar esta receta?")) return;
+
+	  fetch(`/api/tratamientos/eliminar-receta/${nombreArchivo}`, {
+		method: "DELETE"
+	  })
+		.then(async res => {
+		  if (!res.ok) throw await res.json();
+		  return res.json();
+		})
+		.then(() => {
+		  const rut = localStorage.getItem("rutPacienteReceta");
+		  showToast("🗑️ Receta eliminada.");
+		  abrirVisorRecetas(rut);
+		  cargarTratamientos(rut);
+		})
+		.catch(err => {
+		  console.error("❌ Error al eliminar receta:", err);
+		  showToast("No se pudo eliminar", "error");
+		});
+	}
+
+	function calcularDuracion() {
+		const cantidad = parseInt(cantidadInput.value);
+		const dosis = parseInt(dosisInput.value);
+		if (!isNaN(cantidad) && !isNaN(dosis) && dosis > 0) {
+		  const dias = Math.floor(cantidad / dosis);
+		  duracionInput.value = dias;
+		  const fecha = new Date();
+		  fecha.setDate(fecha.getDate() + dias);
+		  fechaFinInput.value = fecha.toISOString().split("T")[0];
+		} else {
+		  duracionInput.value = "";
+		  fechaFinInput.value = "";
+		}
+	}
+
+	function cerrarVisorRecetas() {
+	  document.getElementById("visor-recetas").style.display = "none";
+	  document.getElementById("nueva-receta-input").value = "";
+	}
+
+	  cantidadInput.addEventListener("input", calcularDuracion);
+	  dosisInput.addEventListener("input", calcularDuracion);
+
+	  document.getElementById("nombre_medicamento").addEventListener("input", async function () {
+		const query = this.value.trim();
+		const sugerenciasDiv = document.getElementById("sugerencias");
+
+		if (query.length < 3) {
+		  sugerenciasDiv.style.display = "none";
+		  sugerenciasDiv.innerHTML = "";
+		  return;
+		}
+
+		try {
+		  const response = await fetch(urls.CATALOGO_BUSCAR_NOMBRE(query));
+		  const productos = await response.json();
+
+		  if (productos.length > 0) {
+			sugerenciasDiv.innerHTML = productos.map(p => `
+			  <div style="padding:8px;cursor:pointer;"
+				   onmouseover="this.style.background='#eee'"
+				   onmouseout="this.style.background='white'"
+				   onclick='seleccionarProducto(${JSON.stringify(p)})'>
+				${p.nombre} | <span style="color:#666;font-style:italic;">${p.laboratorio || "Sin laboratorio"}</span>
+			  </div>
+			`).join('');
+
+			sugerenciasDiv.style.display = "block";
+		  } else {
+			sugerenciasDiv.style.display = "none";
+		  }
+		} catch (err) {
+		  console.error("❌ Error al buscar productos:", err);
+		  sugerenciasDiv.style.display = "none";
+		}
+	  });
+	});// fin del DOMContentLoaded
+
+	  document.addEventListener("click", function (e) {
+		if (!e.target.closest("#nombre_medicamento") && !e.target.closest("#sugerencias")) {
+		  document.getElementById("sugerencias").style.display = "none";
+		}
+	  });
+
+	  window.seleccionarProducto = function (producto) {
+		document.getElementById("nombre_medicamento").value = producto.nombre || "";
+		document.getElementById("nombre_medicamento").readOnly = true;
+		document.getElementById("codigo_barra").value = producto.codigo || "";
+		document.getElementById("principio_activo").value = producto.principio_activo || "";
+		document.getElementById("laboratorio").value = producto.laboratorio || "";
+		document.getElementById("precio_venta").value = formatearPrecioCLP(producto.precio_venta);
+		document.getElementById("sugerencias").style.display = "none";
+	  };
+
+    document.getElementById("form-tratamiento").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const botonGuardar = document.getElementById("btn-guardar");
+      botonGuardar.disabled = true;
+      botonGuardar.textContent = "Guardando...";
+
+      const formData = new FormData(this);
+	  console.log("📤 Formulario enviado:", Array.from(formData.entries()));
+      let url, method;
+      if (window.tratamientoEnEdicion) {
+        url = `/api/tratamientos/editar/${window.tratamientoEnEdicion}`;
+        method = "PUT";
+      } else {
+        url = "/api/tratamientos/guardar";
+        method = "POST";
+      }
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          body: formData,
+        });
+
+        if (response.ok) {
+          showToast("✅ Tratamiento guardado correctamente.");
+          const rutPaciente = document.getElementById("rut_paciente").value;
+          this.reset();
+          document.getElementById("nombre_medicamento").readOnly = false;
+          document.getElementById("btn-cancelar-edicion").style.display = "none";
+          document.getElementById("rut_paciente").value = rutPaciente;
+          document.getElementById("duracion_dias").value = "";
+          document.getElementById("fecha_fin").value = "";
+          cargarTratamientos(rutPaciente);
+          window.tratamientoEnEdicion = null;
+        } else {
+          const error = await response.json();
+          showToast("❌ Error: " + error.detail, "error");
+        }
+      } catch (err) {
+        console.error("Error al guardar:", err);
+        showToast("❌ Error de conexión.", "error");
+      } finally {
+        botonGuardar.disabled = false;
+        botonGuardar.textContent = "💾 Guardar Tratamiento";
+      }
+    });
+
+	function cargarTratamientos(rutPaciente) {
+	  console.log("🔄 Cargando tratamientos para:", rutPaciente);
+
+	  if ($.fn.DataTable.isDataTable("#tabla-medicamentos")) {
+		$('#tabla-medicamentos').DataTable().clear().destroy();
+	  }
+
+	  fetch(`/api/tratamientos/por-paciente/${rutPaciente}`)
+		.then(async (response) => {
+		  if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+		  }
+		  return response.json();
+		})
+		.then(async (data) => {
+		  const tabla = document.querySelector("#tabla-medicamentos tbody");
+		  tabla.innerHTML = "";
+
+		  // 👉 Verificamos si hay recetas para el paciente
+		  let recetas = [];
+		  try {
+			const recetasResponse = await fetch(`/api/tratamientos/recetas/${rutPaciente}`);
+			if (recetasResponse.ok) {
+			  recetas = await recetasResponse.json();
+			}
+		  } catch (err) {
+			console.warn("⚠️ No se pudo consultar recetas:", err);
+		  }
+
+		  const tieneRecetas = recetas.length > 0;
+
+		  for (const t of data) {
+			const fila = document.createElement("tr");
+
+			// Botón de receta según existencia
+			let botonReceta = "";
+			if (tieneRecetas) {
+			  botonReceta = `<button class="btn-accion receta" title="Ver Receta" onclick="abrirVisorRecetas('${t.rut_paciente}')">👁️</button>`;
+			} else {
+			  botonReceta = `<button class="btn-accion subir" title="Subir Receta" onclick="abrirSubidaReceta('${t.rut_paciente}', '${t.nombre_medicamento}')">📌</button>`;
+			}
+			fila.innerHTML = `
+			  <td>${t.nombre_medicamento}</td>
+			  <td>${t.cantidad_por_caja}</td>
+			  <td>${t.dosis_diaria}</td>
+			  <td>${t.duracion_dias}</td>
+			  <td>${formatearFecha(t.fecha_fin)}</td>
+			  <td>
+				<div class="acciones-botones">
+				  <button onclick='editarTratamiento(${JSON.stringify(t)})' class="btn-accion editar" title="Editar">✏️</button>
+				  <button onclick='eliminarTratamiento(${t.id})' class="btn-accion eliminar" title="Eliminar">🗑️</button>
+				  ${botonReceta}
+				</div>
+			  </td>
+			`;
+			tabla.appendChild(fila);
+		  }
+		  inicializarDataTable();
+		})
+		.catch((error) => {
+		  console.error("❌ Error al cargar tratamientos:", error.message);
+		  alert("⚠️ No se pudieron cargar los tratamientos. Revisa la consola.");
+		});
+	}
+
+
+	  function editarTratamiento(tratamiento) {
+		console.log("🟡 Tratamiento recibido para edición:", tratamiento);
+
+		document.getElementById("codigo_barra").value = tratamiento.codigo_barra || "";
+		document.getElementById("nombre_medicamento").value = tratamiento.nombre_medicamento || "";
+		document.getElementById("nombre_medicamento").readOnly = true;
+		document.getElementById("cantidad_por_caja").value = tratamiento.cantidad_por_caja;
+		document.getElementById("dosis_diaria").value = tratamiento.dosis_diaria;
+		document.getElementById("duracion_dias").value = tratamiento.duracion_dias;
+		document.getElementById("fecha_fin").value = tratamiento.fecha_fin;
+		document.getElementById("rut_paciente").value = tratamiento.rut_paciente;
+
+		if (tratamiento.codigo_barra) {
+		  fetch(`/api/catalogo/producto-por-codigo/${tratamiento.codigo_barra}`)
+			.then(response => {
+			  if (!response.ok) throw new Error("No se encontró el producto por código");
+			  return response.json();
+			})
+			.then(producto => {
+			  document.getElementById("principio_activo").value = producto.principio_activo || "";
+			  document.getElementById("laboratorio").value = producto.laboratorio || "";
+			  document.getElementById("precio_venta").value =
+				producto.precio_venta !== null && producto.precio_venta !== undefined
+				  ? formatearPrecioCLP(producto.precio_venta)
+				  : "";
+			})
+			.catch(error => {
+			  console.warn("⚠️ Error al buscar por código:", error);
+			  limpiarCamposProducto();
+			});
+		} else if (tratamiento.nombre_medicamento) {
+		  fetch(`/api/catalogo/buscar-productos/${tratamiento.nombre_medicamento}`)
+			.then(response => {
+			  if (!response.ok) throw new Error("No se encontró el producto por nombre");
+			  return response.json();
+			})
+			.then(productos => {
+			  const producto = productos[0];
+			  if (producto) {
+				document.getElementById("principio_activo").value = producto.principio_activo || "";
+				document.getElementById("laboratorio").value = producto.laboratorio || "";
+				document.getElementById("precio_venta").value =
+				  producto.precio_venta !== null && producto.precio_venta !== undefined
+					? formatearPrecioCLP(producto.precio_venta)
+					: "";
+				document.getElementById("codigo_barra").value = producto.codigo || "";
+			  } else {
+				limpiarCamposProducto();
+			  }
+			})
+			.catch(error => {
+			  console.warn("⚠️ Error al buscar por nombre:", error);
+			  limpiarCamposProducto();
+			});
+		} else {
+		  limpiarCamposProducto();
+		}
+
+		window.tratamientoEnEdicion = tratamiento.id;
+		document.getElementById("btn-cancelar-edicion").style.display = "inline-block";
+	  }
+
+	  function limpiarCamposProducto() {
+		document.getElementById("principio_activo").value = "";
+		document.getElementById("laboratorio").value = "";
+		document.getElementById("precio_venta").value = "";
+	  }
+
+	function formatearPrecioCLP(valor) {
+	  const numero = parseFloat(valor);
+	  if (isNaN(numero)) return "";
+	  return "$ " + numero.toLocaleString("es-CL");
+	}
+
+
+	document.getElementById("codigo_barra").addEventListener("input", async function () {
+	  const codigo = this.value.trim();
+	  if (codigo.length < 5) return;
+
+	  try {
+		const response = await fetch(`/api/catalogo/producto-por-codigo/${codigo}`);
+		if (!response.ok) {
+		  document.getElementById("nombre_medicamento").value = "";
+		  return;
+		}
+		const producto = await response.json();
+		document.getElementById("nombre_medicamento").value = producto.nombre || "";
+	  } catch (err) {
+		console.error("❌ Error al buscar por código de barra:", err);
+	  }
+	});
+
+	function abrirPopupReceta() {
+	  const rutPaciente = document.getElementById("rut_paciente").value;
+	  document.getElementById("rut_paciente_popup").value = rutPaciente;
+	  document.getElementById("popup-receta").style.display = "block";
+	}
+
+	function cerrarPopupReceta() {
+	  document.getElementById("popup-receta").style.display = "none";
+	}
+
+	function finalizarTratamiento() {
+	  window.location.href = "/listado-pacientes";
+	}
+
+
+
+
+	function eliminarTratamiento(id) {
+	  if (!confirm("⚠️ ¿Estás seguro que deseas eliminar este tratamiento?")) return;
+
+	  fetch(`/api/tratamientos/eliminar/${id}`, {
+		method: "DELETE",
+	  })
+		.then(response => {
+		  if (!response.ok) throw new Error("Error al eliminar");
+		  alert("✅ Tratamiento eliminado correctamente.");
+		  const rutPaciente = document.getElementById("rut_paciente").value;
+		  console.log("Recargando tratamientos para:", rutPaciente);
+		  cargarTratamientos(rutPaciente);
+		})
+		.catch(error => {
+		  console.error("❌ Error al eliminar:", error);
+		  alert("❌ No se pudo eliminar el tratamiento.");
+		});
+	}
+
+	function abrirSubidaReceta(rut, nombre) {
+	  const input = document.createElement("input");
+	  input.type = "file";
+	  input.accept = ".pdf,.jpg,.jpeg,.png";
+	  input.style.display = "none";
+	  document.body.appendChild(input);
+
+	  input.addEventListener("change", () => {
+		const archivo = input.files[0];
+		if (!archivo) return;
+
+		const formData = new FormData();
+		formData.append("file", archivo);
+		formData.append("rut_paciente", rut);
+		formData.append("nombre_paciente", nombre);
+
+		fetch("/api/tratamientos/subir-receta", {
+		  method: "POST",
+		  body: formData,
+		})
+		  .then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		  })
+		  .then(() => {
+			showToast("✅ Receta subida correctamente.");
+			cargarTratamientos(rut);  // recarga la grilla
+		  })
+		  .catch((err) => {
+			console.error("❌ Error al subir receta:", err);
+			showToast("❌ Error al subir receta.");
+		  });
+
+		document.body.removeChild(input);
+	  });
+
+	  input.click();
+	}
+
+
+	function mostrarNombreArchivo() {
+	  const input = document.getElementById("archivo_receta");
+	  const display = document.getElementById("nombre_archivo");
+	  if (input.files.length > 0) {
+		const file = input.files[0];
+		display.value = `${file.name} (${(file.size / 1024).toFixed(1)} KB, ${file.type})`;
+	  } else {
+		display.value = "Ningún archivo seleccionado";
+	  }
+	}
+	
+	function abrirVisorRecetas(rutPaciente) {
+	  fetch(`/api/tratamientos/recetas/${rutPaciente}`)
+		.then(res => res.json())
+		.then(recetas => {
+		  const contenedor = document.getElementById("lista-recetas");
+		  contenedor.innerHTML = "";
+
+		  if (recetas.length === 0) {
+			contenedor.innerHTML = "<p>❌ No hay recetas registradas.</p>";
+		  } else {
+			recetas.forEach((receta, index) => {
+			  const fila = document.createElement("div");
+			  fila.style.display = "flex";
+			  fila.style.justifyContent = "space-between";
+			  fila.style.alignItems = "center";
+			  fila.style.marginBottom = "10px";
+
+			  const textoVisible = `📄 Receta ${index + 1}`;
+
+			  fila.innerHTML = `
+				<a href="${receta.url}" target="_blank" style="text-decoration:none;">${textoVisible}</a>
+				<button onclick="eliminarReceta('${receta.nombre}')" style="background-color:#dc3545; color:white; border:none; border-radius:4px; padding:4px 10px;">🗑 Eliminar️</button>
+			  `;
+			  contenedor.appendChild(fila);
+			});
+		  }
+
+		  document.getElementById("visor-recetas").style.display = "block";
+		  localStorage.setItem("rutPacienteReceta", rutPaciente);
+		})
+		.catch(err => {
+		  console.error("❌ Error al cargar recetas:", err);
+		  showToast("Error al cargar recetas", "error");
+		});
+	}
+
+	function cerrarVisorRecetas() {
+	  document.getElementById("visor-recetas").style.display = "none";
+	  document.getElementById("nueva-receta-input").value = "";
+	}
+
+	function subirNuevaRecetaDesdeVisor() {
+	  const archivo = document.getElementById("nueva-receta-input").files[0];
+	  const rut = localStorage.getItem("rutPacienteReceta");
+	  const nombre = document.getElementById("nombre_paciente").value || "sin_nombre";
+
+	  if (!archivo || !rut || !nombre) {
+		alert("⚠️ Debes seleccionar un archivo y asegurarte de que el paciente esté cargado.");
+		return;
+	  }
+
+	  const formData = new FormData();
+	  formData.append("file", archivo);
+	  formData.append("rut_paciente", rut);
+	  formData.append("nombre_paciente", nombre);
+
+	  fetch("/api/tratamientos/subir-receta", {
+		method: "POST",
+		body: formData
+	  })
+		.then(async res => {
+		  if (!res.ok) throw await res.json();
+		  return res.json();
+		})
+		.then(() => {
+		  showToast("✅ Receta subida.");
+		  abrirVisorRecetas(rut);
+		  cargarTratamientos(rut);
+		})
+		.catch(err => {
+		  console.error("❌ Error al subir receta:", err);
+		  showToast("Error al subir receta", "error");
+		});
+	}
+
+	function eliminarReceta(nombreArchivo) {
+	  if (!confirm("⚠️ ¿Eliminar esta receta?")) return;
+
+	  fetch(`/api/tratamientos/eliminar-receta/${nombreArchivo}`, {
+		method: "DELETE"
+	  })
+		.then(async res => {
+		  if (!res.ok) throw await res.json();
+		  return res.json();
+		})
+		.then(() => {
+		  const rut = localStorage.getItem("rutPacienteReceta");
+		  showToast("🗑️ Receta eliminada.");
+		  abrirVisorRecetas(rut);
+		  cargarTratamientos(rut);
+		})
+		.catch(err => {
+		  console.error("❌ Error al eliminar receta:", err);
+		  showToast("No se pudo eliminar la receta", "error");
+		});
+	}	
+	
+</script>
+	<!-- ✅ jQuery y DataTables -->
+	<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+	<!-- ✅ Inicializador DataTable -->
+	<script>
+	  let tablaDT;
+		function inicializarDataTable() {
+		  tablaDT = $('#tabla-medicamentos').DataTable({
+			responsive: true,
+			pageLength: 5,
+			searching: false,
+			language: {
+			  url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+			},
+			dom: 'Brtip',
+			buttons: ['copy', 'excel', 'pdf'],
+			columnDefs: [
+			  { targets: -1, orderable: false, width: "120px" }
+			]
+		  });
+		}
+	</script>
+</body>
+</html>

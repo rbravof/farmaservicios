@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Tratamiento</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      padding: 40px;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input {
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .actions {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      background-color: #28a745;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 0 10px;
+    }
+    button.cancelar {
+      background-color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>✏️ Editar Tratamiento</h2>
+  <form id="form-editar-tratamiento">
+    <div class="form-group">
+      <label>Nombre del Medicamento</label>
+      <input type="text" id="nombre_medicamento" required />
+    </div>
+    <div class="form-group">
+      <label>Cantidad por Caja</label>
+      <input type="number" id="cantidad_por_caja" required />
+    </div>
+    <div class="form-group">
+      <label>Dosis Diaria</label>
+      <input type="number" id="dosis_diaria" required />
+    </div>
+    <div class="form-group">
+      <label>Días de Tratamiento</label>
+      <input type="number" id="duracion_dias" required />
+    </div>
+    <div class="form-group">
+      <label>Fecha Fin</label>
+      <input type="date" id="fecha_fin" required />
+    </div>
+    <div class="actions">
+      <button type="submit">💾 Guardar Cambios</button>
+      <button type="button" class="cancelar" onclick="cancelarEdicion()">❌ Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+import urls from '/static/js/urls.js';
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const id = localStorage.getItem("tratamientoEditarId");
+  if (!id) {
+    alert("⚠️ No hay tratamiento seleccionado para editar.");
+    window.location.href = "/ver-tratamiento";
+    return;
+  }
+
+  try {
+    document.getElementById("form-editar-tratamiento").style.opacity = "0.5";
+
+    const response = await fetch(urls.TRATAMIENTOS_OBTENER(id));
+    const tratamiento = await response.json();
+
+    document.getElementById("nombre_medicamento").value = tratamiento.nombre_medicamento;
+    document.getElementById("cantidad_por_caja").value = tratamiento.cantidad_por_caja;
+    document.getElementById("dosis_diaria").value = tratamiento.dosis_diaria;
+    document.getElementById("duracion_dias").value = tratamiento.duracion_dias;
+    document.getElementById("fecha_fin").value = tratamiento.fecha_fin;
+
+    document.getElementById("form-editar-tratamiento").style.opacity = "1";
+
+  } catch (error) {
+    console.error("Error al cargar tratamiento:", error);
+    alert("❌ Error al cargar el tratamiento.");
+    window.location.href = "/ver-tratamiento";
+  }
+
+  document.getElementById("form-editar-tratamiento").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const data = {
+      nombre_medicamento: document.getElementById("nombre_medicamento").value,
+      cantidad_por_caja: parseInt(document.getElementById("cantidad_por_caja").value),
+      dosis_diaria: parseInt(document.getElementById("dosis_diaria").value),
+      duracion_dias: parseInt(document.getElementById("duracion_dias").value),
+      fecha_fin: document.getElementById("fecha_fin").value
+    };
+
+    try {
+      const res = await fetch(urls.TRATAMIENTOS_EDITAR(id), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert("✅ Tratamiento actualizado exitosamente.");
+        localStorage.removeItem("tratamientoEditarId");
+        window.location.href = "/ver-tratamiento";
+      } else {
+        const err = await res.json();
+        alert("❌ Error: " + err.detail);
+      }
+
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+      alert("❌ Error de conexión.");
+    }
+  });
+});
+
+function cancelarEdicion() {
+  localStorage.removeItem("tratamientoEditarId");
+  window.location.href = "/ver-tratamiento";
+}
+</script>
+</body>
+</html>

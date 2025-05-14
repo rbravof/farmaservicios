@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administración | Usuarios</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      color: #01485E;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #00796B;
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004D40;
+    }
+
+    .success-message, .error-message {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .success-message { color: green; }
+    .error-message { color: red; }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Registrar Nuevo Usuario</h2>
+
+    <form id="usuario-form">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" required>
+
+      <label for="usuario">Nombre de usuario</label>
+      <input type="text" id="usuario" required>
+
+      <label for="contrasena">Contraseña</label>
+      <input type="password" id="contrasena" required>
+
+      <label for="rol">Rol</label>
+      <select id="rol" required>
+        <option value="admin">Administrador</option>
+        <option value="operador">Operador</option>
+      </select>
+
+      <label for="sucursal_id">Sucursal</label>
+      <select id="sucursal_id" required>
+        <option value="">Cargando sucursales...</option>
+      </select>
+
+      <button type="submit">Guardar Usuario</button>
+    </form>
+
+    <p class="success-message" id="success-msg">Usuario registrado correctamente ✅</p>
+    <p class="error-message" id="error-msg">Error al registrar el usuario ❌</p>
+  </div>
+
+  <script>
+    const sucursalSelect = document.getElementById("sucursal_id");
+    const form = document.getElementById("usuario-form");
+    const successMsg = document.getElementById("success-msg");
+    const errorMsg = document.getElementById("error-msg");
+
+    // Cargar sucursales al iniciar
+    fetch("http://127.0.0.1:8000/admin/sucursales/")
+      .then(response => response.json())
+      .then(data => {
+        sucursalSelect.innerHTML = "";
+        data.forEach(sucursal => {
+          const option = document.createElement("option");
+          option.value = sucursal.id;
+          option.textContent = sucursal.nombre;
+          sucursalSelect.appendChild(option);
+        });
+      })
+      .catch(() => {
+        sucursalSelect.innerHTML = '<option value="">No se pudieron cargar</option>';
+      });
+
+    // Enviar formulario
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const data = {
+        nombre: document.getElementById("nombre").value,
+        usuario: document.getElementById("usuario").value,
+        contrasena: document.getElementById("contrasena").value,
+        rol: document.getElementById("rol").value,
+        sucursal_id: parseInt(document.getElementById("sucursal_id").value)
+      };
+
+      fetch("http://127.0.0.1:8000/admin/usuarios/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (response.ok) {
+          successMsg.style.display = "block";
+          errorMsg.style.display = "none";
+          form.reset();
+        } else {
+          throw new Error("Error");
+        }
+      })
+      .catch(() => {
+        successMsg.style.display = "none";
+        errorMsg.style.display = "block";
+      });
+    });
+  </script>
+
+</body>
+</html>

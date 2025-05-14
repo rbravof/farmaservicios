@@ -1,0 +1,3 @@
+@echo off
+echo Abriendo formulario de farmacias...
+start file:///%~dp0farmacias.html

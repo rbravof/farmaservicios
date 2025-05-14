@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tratamientos Próximos a Vencer | FarmaServicios</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>body{font-family:'Segoe UI',sans-serif;background-color:#f4f6f8;padding:30px;}h2{margin-bottom:20px;color:#01485E;} .btn-comprado { background-color: #FFA500; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin: 2px; } .btn-ver,.btn-correo,.btn-ws{background-color:#026a8c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin:2px;}.btn-correo{background-color:#007bff;} .btn-ws{background-color:#25D366;}#tabla-vencidos thead th{text-align:center;}#tabla-vencidos td:not(:nth-child(2)){text-align:center;}#popup-tratamiento td:not(:first-child),#popup-tratamiento th:not(:first-child){text-align:center;}#popup-tratamiento td:nth-child(3),#popup-tratamiento th:nth-child(3){padding-left:40px;}#popup-tratamiento>div{width:90%;max-width:900px;}.filtro-dias{margin-bottom:20px;}.filtro-dias select{padding:8px 12px;font-size:14px;border-radius:6px;border:1px solid #ccc;}</style>
+</head>
+<body>
+  <h2>💼 Tratamientos Próximos a Vencer</h2>
+
+  <div class="filtro-dias">
+    <label for="filtroDias">Filtrar por días restantes: </label>
+    <select id="filtroDias">
+      <option value="todos">Todos</option>
+      <option value="1">1 día</option>
+      <option value="3">3 días</option>
+      <option value="5">5 días</option>
+    </select>
+  </div>
+
+  <table id="tabla-vencidos" class="display">
+    <thead>
+      <tr>
+        <th>Rut</th>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Correo</th>
+        <th>Medicamento</th>
+        <th>Fecha Fin</th>
+        <th>Tratamiento</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+	<h3 style="margin-top: 40px;">📋 Historial de Contactos</h3>
+	<table id="tabla-historial" class="display">
+	  <thead>
+		<tr>
+		  <th>Rut</th>
+		  <th>Medicamento</th>
+		  <th>Tipo de Contacto</th>
+		  <th>Fecha</th>
+		  <th>Usuario</th>
+		</tr>
+	  </thead>
+	  <tbody></tbody>
+	</table>
+
+	<div id="popupHistorial" class="popup" style="display: none;">
+	  <div class="popup-content">
+		<span class="close" onclick="cerrarPopupHistorial()">&times;</span>
+		<h3>Historial de Contactos</h3>
+		<table id="tablaHistorialContactos">
+		  <thead>
+			<tr>
+			  <th>Fecha</th>
+			  <th>Tipo</th>
+			  <th>Medicamento</th>
+			  <th>Usuario</th>
+			</tr>
+		  </thead>
+		  <tbody></tbody>
+		</table>
+	  </div>
+	</div>
+
+
+  <script>
+    let tratamientosOriginales = [];
+
+	async function marcarComoComprado(idTratamiento, medicamento) {
+	  const confirmacion = await Swal.fire({
+		title: '¿Confirmar compra del tratamiento?',
+		html: `
+		  <p><strong>Medicamento:</strong> ${medicamento}</p>
+		  <p>El tratamiento actual desaparecerá de la grilla.</p>
+		  <p>Se creará automáticamente un nuevo tratamiento con los días restantes sumados.</p>
+		`,
+		icon: 'question',
+		showCancelButton: true,
+		confirmButtonText: 'Sí, continuar',
+		cancelButtonText: 'Cancelar',
+		confirmButtonColor: '#FF8800'
+	  });
+
+	  if (confirmacion.isConfirmed) {
+		try {
+			console.log("ID que se envía al backend:", idTratamiento);
+		  const response = await fetch(`/api/tratamientos/comprar/${idTratamiento}`, {
+			method: 'POST'
+		  });
+
+		  const data = await response.json();
+
+		  if (response.ok) {
+			Swal.fire({
+			  icon: 'success',
+			  title: '✅ Tratamiento renovado',
+			  text: 'El nuevo tratamiento fue creado correctamente.',
+			  confirmButtonColor: '#28a745'
+			});
+
+			// Recargar tabla o eliminar fila
+			$(`#fila-${idTratamiento}`).remove();
+
+		  } else {
+			Swal.fire({
+			  icon: 'error',
+			  title: '❌ Error al renovar',
+			  text: data.detail || 'No se pudo completar la operación.',
+			  confirmButtonColor: '#dc3545'
+			});
+		  }
+		} catch (error) {
+		  Swal.fire({
+			icon: 'error',
+			title: '❌ Error inesperado',
+			text: 'Ocurrió un problema en la conexión con el servidor.',
+			confirmButtonColor: '#dc3545'
+		  });
+		  console.error('Error al marcar como comprado:', error);
+		}
+	  }
+	}
+
+
+
+
+	function eliminarFilaPorTratamiento(rut, medicamento) {
+	  const tabla = $('#tabla-vencidos').DataTable();
+	  tabla.rows().every(function() {
+		const data = this.data();
+		if (data[0] === rut && data[4] === medicamento) {
+		  this.remove();
+		}
+	  });
+	  tabla.draw();
+	}
+
+	function agregarBotonesAcciones(rut, nombre, correo, telefono, medicamento, idTratamiento) {
+	  return `
+		<button class='btn-correo' onclick="enviarCorreo('${correo}','${nombre}','${medicamento}','${rut}')">📧 Correo</button>
+		<button class='btn-ws' onclick="enviarWhatsApp('${telefono}','${nombre}','${medicamento}','${rut}')">💬 WhatsApp</button>
+		<button class='btn-comprado' onclick="marcarComoComprado(${idTratamiento}, '${medicamento}')">🛒 Comprado</button>
+	  `;
+	}
+
+
+	function formatearFecha(fechaISO) {
+	  const f = new Date(fechaISO);
+	  const d = String(f.getDate()).padStart(2, '0');
+	  const m = String(f.getMonth() + 1).padStart(2, '0');
+	  const y = f.getFullYear();
+	  return `${d}-${m}-${y}`;
+	}
+
+	function verTratamiento(rut) {
+	  alert("🔎 Mostrar detalle del tratamiento del paciente " + rut);
+	}
+
+    function formatearFecha(fechaISO) {
+      if (!fechaISO) return "";
+      const f = new Date(fechaISO);
+      const d = String(f.getDate()).padStart(2, '0');
+      const m = String(f.getMonth() + 1).padStart(2, '0');
+      const y = f.getFullYear();
+      return `${d}-${m}-${y}`;
+    }
+
+    function calcularDiasRestantes(fechaFinStr) {
+      const hoy = new Date();
+      const fechaFin = new Date(fechaFinStr);
+      const diff = Math.ceil((fechaFin - hoy) / (1000 * 60 * 60 * 24));
+      return diff;
+    }
+
+    function filtrarPorDias() {
+      const valor = document.getElementById("filtroDias").value;
+      const tabla = $('#tabla-vencidos').DataTable();
+      tabla.clear();
+
+      let filtrados = tratamientosOriginales.filter(t => calcularDiasRestantes(t.fecha_fin) > 0);
+      if (valor !== "todos") {
+        const dias = parseInt(valor);
+        filtrados = filtrados.filter(t => calcularDiasRestantes(t.fecha_fin) <= dias);
+      }
+		filtrados.forEach(item => {
+			tabla.row.add([
+			  item.rut,
+			  item.nombre,
+			  item.telefono,
+			  item.correo,
+			  item.nombre_medicamento || "-",
+			  formatearFecha(item.fecha_fin) || "-",
+			  `<button class='btn-ver' onclick="verTratamiento('${item.rut}')">Ver</button>`,
+			  agregarBotonesAcciones(item.rut, item.nombre, item.correo, item.telefono, item.nombre_medicamento, item.id)
+			]).node().id = `fila-${item.id}`;
+		});
+
+      tabla.draw();
+    }
+
+async function cargarTratamientosVencidos() {
+  try {
+    const response = await fetch("/api/tratamientos/vencidos");
+    const data = await response.json();
+    tratamientosOriginales = data;
+
+    // 🧼 Destruir instancia previa si existe
+    if ($.fn.DataTable.isDataTable('#tabla-vencidos')) {
+      $('#tabla-vencidos').DataTable().destroy();
+    }
+
+    // 💡 Vaciar el cuerpo manualmente por seguridad
+    $('#tabla-vencidos tbody').empty();
+
+    // Inicializar tabla
+    $('#tabla-vencidos').DataTable({
+      data: [],
+      columns: [
+        { title: "RUT" },
+        { title: "Nombre" },
+        { title: "Teléfono" },
+        { title: "Correo" },
+        { title: "Medicamento" },
+        { title: "Fecha Fin" },
+        { title: "Tratamiento" },
+        { title: "Acciones" }
+      ],
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50, 100],
+      dom: 'Bfrtip',
+      buttons: ['excelHtml5', 'pdfHtml5'],
+      language: { url: "/static/js/es-ES.json" }
+    });
+
+    filtrarPorDias();
+  } catch (error) {
+    console.error("❌ Error al cargar tratamientos vencidos:", error);
+  }
+}
+
+
+	function enviarCorreo(correo, nombre, medicamento, rut) {
+	  registrarContacto("correo", rut, medicamento, () => {
+		const formData = new FormData();
+		formData.append("correo", correo);
+		formData.append("nombre", nombre);
+		formData.append("medicamento", medicamento);
+
+		fetch("/api/tratamientos/enviar-correo", {
+		  method: "POST",
+		  body: formData
+		})
+		.then(res => res.ok ? mostrarNotificacion("📧 Correo enviado correctamente.", "success") : mostrarNotificacion("❌ Error al enviar correo.", "error"))
+		.catch(err => {
+		  console.error("Error enviando correo:", err);
+		  mostrarNotificacion("❌ Error de red al enviar correo.", "error");
+		});
+	  });
+	}
+
+	function enviarWhatsApp(telefono, nombre, medicamento, rut) {
+	  registrarContacto("whatsapp", rut, medicamento, () => {
+		const mensaje = `Hola ${nombre}, te recordamos que tu medicamento '${medicamento}' está por vencer. Por favor acércate a renovarlo.`;
+		const url = `https://wa.me/56${telefono}?text=${encodeURIComponent(mensaje)}`;
+		window.open(url, '_blank');
+	  });
+	}
+
+	function registrarContacto(tipo, rut, medicamento, callback) {
+	  const usuario = JSON.parse(localStorage.getItem("usuario"))?.usuario || "no definido";
+	  console.log("🧑 Usuario autenticado:", usuario);
+	  fetch("/api/tratamientos/registrar-contacto", {
+		method: "POST",
+		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		body: new URLSearchParams({
+		  tipo_contacto: tipo,
+		  rut_paciente: rut,
+		  nombre_medicamento: medicamento,
+		  usuario: usuario
+		})
+	  })
+	  .then(async res => {
+		const data = await res.json();
+		if (!res.ok) {
+		  const msg = data?.detail || "❌ Error al registrar el contacto.";
+		  mostrarNotificacion(msg, "warning");
+		} else {
+		  mostrarNotificacion(data?.mensaje || "✅ Contacto registrado correctamente.", "success");
+		  if (typeof callback === "function") callback(); // ✅ se ejecuta
+		}
+	  })
+	  .catch(err => {
+		console.error("❌ Error en la red al registrar contacto:", err);
+		mostrarNotificacion("❌ Error de red al registrar contacto.", "error");
+	  });
+	}
+
+	async function cargarHistorialContactos() {
+	  try {
+		const res = await fetch("/api/tratamientos/historial-contactos");
+		const data = await res.json();
+		console.log("📋 Datos del historial:", data);
+
+		let tablaHistorial;
+
+		if ($.fn.DataTable.isDataTable('#tabla-historial')) {
+		  tablaHistorial = $('#tabla-historial').DataTable();
+		  tablaHistorial.clear().draw();
+		} else {
+		  tablaHistorial = $('#tabla-historial').DataTable({
+			columns: [
+			  { title: "RUT" },
+			  { title: "Medicamento" },
+			  { title: "Tipo de Contacto" },
+			  { title: "Fecha" },
+			  { title: "Usuario" }
+			],
+			dom: 'Bfrtip',
+			buttons: ['excelHtml5', 'pdfHtml5', 'print'],
+			language: { url: "/static/js/es-ES.json" }
+		  });
+		}
+
+		data.forEach(c => {
+		  tablaHistorial.row.add([
+			c.rut_paciente,
+			c.nombre_medicamento,
+			c.tipo_contacto,
+			formatearFecha(c.fecha_contacto),
+			c.usuario
+		  ]);
+		});
+
+		tablaHistorial.draw();
+	  } catch (error) {
+		console.error("❌ Error al cargar historial de contactos:", error);
+	  }
+	}
+	  
+	//
+	
+	document.addEventListener("DOMContentLoaded", () => {
+	  cargarTratamientosVencidos();
+	  cargarHistorialContactos();
+	  document.getElementById("filtroDias").addEventListener("change", filtrarPorDias);
+	});
+
+
+	
+	function mostrarNotificacion(mensaje, tipo = "info") {
+	  const noti = document.createElement("div");
+	  noti.innerHTML = tipo === "error" || tipo === "warning" 
+		? `❌ ${mensaje}`
+		: mensaje;
+
+	  noti.style.position = "fixed";
+	  noti.style.top = "20px";
+	  noti.style.right = "20px";
+	  noti.style.padding = "12px 20px";
+	  noti.style.backgroundColor = tipo === "success" ? "#4caf50" :
+								  tipo === "error" ? "#f44336" :
+								  tipo === "warning" ? "#f44336" : "#2196f3";
+	  noti.style.color = "white";
+	  noti.style.fontWeight = "bold";
+	  noti.style.borderRadius = "8px";
+	  noti.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+	  noti.style.zIndex = 9999;
+
+	  document.body.appendChild(noti);
+
+	  setTimeout(() => {
+		noti.style.transition = "opacity 0.5s";
+		noti.style.opacity = 0;
+		setTimeout(() => document.body.removeChild(noti), 500);
+	  }, 4000);
+	}
+	
+	function mostrarHistorialContactos(rutPaciente) {
+	  fetch(`/historial-contactos?rut_paciente=${rutPaciente}`)
+		.then(response => response.json())
+		.then(data => {
+		  const tbody = document.querySelector("#tablaHistorialContactos tbody");
+		  tbody.innerHTML = "";
+
+		  if (data.length === 0) {
+			tbody.innerHTML = "<tr><td colspan='4'>Sin contactos registrados.</td></tr>";
+		  } else {
+			data.forEach(contacto => {
+			  const row = document.createElement("tr");
+			  row.innerHTML = `
+				<td>${contacto.fecha_contacto}</td>
+				<td>${contacto.tipo_contacto}</td>
+				<td>${contacto.nombre_medicamento}</td>
+				<td>${contacto.usuario}</td>
+			  `;
+			  tbody.appendChild(row);
+			});
+		  }
+
+		  document.getElementById("popupHistorial").style.display = "block";
+		})
+		.catch(error => {
+		  alert("Error al obtener historial de contactos");
+		  console.error(error);
+		});
+	}
+
+	function cerrarPopupHistorial() {
+	  document.getElementById("popupHistorial").style.display = "none";
+	}
+
+  </script>
+</body>
+</html>

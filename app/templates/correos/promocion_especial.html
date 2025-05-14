@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>¡Tenemos algo especial para ti!</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header img {
+      max-height: 80px;
+    }
+    .promo-banner {
+      background-color: #C02B2A;
+      color: white;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .cta-button {
+      display: inline-block;
+      background-color: #01485E;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-top: 20px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://tu-dominio.com/static/images/Go%20Farma%20Logo%20Final_logo%202.png" alt="GoFarma">
+    </div>
+
+    <div class="promo-banner">
+      🏱 {{ titulo_promocion }}
+    </div>
+
+    <div class="content">
+      <p>Hola <strong>{{ nombre }}</strong>,</p>
+
+      <p>En GoFarma queremos premiar tu fidelidad. Esta semana tenemos una oferta especial solo para nuestros pacientes más comprometidos:</p>
+
+      <p><strong>{{ descripcion_promocion }}</strong></p>
+
+      <p>Además, puedes recibir tus productos en casa, sin costo adicional.</p>
+
+      <a href="{{ enlace_cta }}" class="cta-button">{{ texto_boton }}</a>
+
+      <p>Gracias por confiar en nosotros 💙</p>
+    </div>
+
+    <div class="footer">
+      Este correo fue enviado por el sistema FarmaServicios. Si tienes dudas, contáctanos a través de nuestra web.
+    </div>
+  </div>
+</body>
+</html>

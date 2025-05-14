@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Carga Masiva de Productos</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+    }
+
+    h2 {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 30px;
+    }
+
+    .upload-section {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      max-width: 800px;
+      margin: 0 auto 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    input[type="file"] {
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .btn-cargar {
+      background-color: #00796B;
+      color: white;
+    }
+
+    .btn-guardar {
+      background-color: #F57C00;
+      color: white;
+    }
+
+    .grilla {
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #e0f2f1;
+      text-align: center;
+    }
+
+    td.precio {
+      text-align: center;
+    }
+
+    .toast {
+      text-align: center;
+      font-weight: bold;
+      color: green;
+      margin-top: 10px;
+    }
+
+    #modal-confirmacion {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    .modal-content button {
+      margin-top: 20px;
+      background-color: #00796B;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Carga Masiva de Productos</h2>
+
+  <div class="upload-section">
+    <input type="file" id="fileInput" accept=".xlsx" />
+    <button class="btn-cargar" onclick="cargarExcel()">Cargar desde Excel</button>
+    <button class="btn-guardar" onclick="guardarEnBD()">Cargar productos a la base de datos</button>
+	<button class="btn-limpiar" onclick="limpiarGrilla()" style="background-color: #388E3C; color: white;">Limpiar grilla</button>
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <div class="grilla">
+    <table id="tabla-productos">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Principio Activo</th>
+          <th>Laboratorio</th>
+          <th>Formato</th>
+          <th>Precio Compra Neto</th>
+          <th>Precio Venta Neto</th>
+          <th>Precio Venta</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Modal de Confirmación -->
+  <div id="modal-confirmacion">
+    <div class="modal-content">
+      <h3>✅ Productos cargados correctamente</h3>
+      <button onclick="cerrarModal()">Aceptar</button>
+    </div>
+  </div>
+
+  <script>
+    let productos = [];
+
+    function cargarExcel() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert("Selecciona un archivo Excel.");
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const datos = XLSX.utils.sheet_to_json(sheet);
+
+        productos = datos;
+
+        const tbody = document.querySelector("#tabla-productos tbody");
+        tbody.innerHTML = "";
+        productos.forEach(prod => {
+          const fila = `<tr>
+            <td>${prod["Codigo"]}</td>
+            <td>${prod["Nombre"]}</td>
+            <td>${prod["Principio Activo"] || ""}</td>
+            <td>${prod["Laboratorio"]}</td>
+            <td>${prod["Formato"]}</td>
+            <td class="precio">${prod["Precio Compra Neto"]}</td>
+            <td class="precio">${prod["Precio Venta Neto"]}</td>
+            <td class="precio">${prod["Precio Venta"]}</td>
+          </tr>`;
+          tbody.insertAdjacentHTML("beforeend", fila);
+        });
+
+        document.getElementById("toast").textContent = `✅ ${productos.length} productos cargados visualmente.`;
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function guardarEnBD() {
+      if (!productos.length) return alert("Primero debes cargar un archivo Excel.");
+
+      const productosTransformados = productos.map(p => ({
+        codigo: String(p["Codigo"]),
+        nombre: p["Nombre"],
+        principio_activo: p["Principio Activo"],
+        laboratorio: p["Laboratorio"],
+        formato: p["Formato"],
+        precio_compra_neto: Math.round(p["Precio Compra Neto"]),
+        precio_venta_neto: Math.round(p["Precio Venta Neto"]),
+        precio_venta: Math.round(p["Precio Venta"])
+      }));
+
+      fetch("/api/catalogo/carga-masiva", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productosTransformados)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Error en la carga");
+        return res.json();
+      })
+      .then(data => {
+        mostrarModal();
+      })
+      .catch(err => {
+        alert("❌ Error al guardar productos: " + err.message);
+      });
+    }
+
+    function mostrarModal() {
+      document.getElementById("modal-confirmacion").style.display = "flex";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal-confirmacion").style.display = "none";
+      document.querySelector("#tabla-productos tbody").innerHTML = "";
+      document.getElementById("toast").textContent = "";
+      productos = [];
+      document.getElementById("fileInput").value = "";
+    }
+
+	function limpiarGrilla() {
+	  productos = [];
+	  document.querySelector("#tabla-productos tbody").innerHTML = "";
+	  document.getElementById("toast").textContent = "Grilla limpiada correctamente.";
+	}
+	
+
+  </script>
+
+</body>
+</html>

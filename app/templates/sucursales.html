@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrar Sucursales | FarmaServicios</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <style>*{box-sizing:border-box;}body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background-color:#f4f6f8;}.container{max-width:1100px;margin:30px auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.1);}h1{text-align:center;color:#004D40;margin-bottom:30px;}form{display:grid;grid-template-columns:1fr 1fr;gap:20px;}label{font-weight:bold;color:#333;margin-bottom:5px;display:block;}input,select{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc;font-size:14px;}.full-width{grid-column:1 / 3;}button{background-color:#01485E;color:white;border:none;padding:12px;border-radius:6px;cursor:pointer;transition:0.3s;font-size:16px;}button:hover{background-color:#013747;}table{width:100%;border-collapse:separate;border-spacing:0;margin-top:40px;background-color:#ffffff;font-size:14px;table-layout:auto;}th,td{padding:12px 15px;text-align:center;border-bottom:1px solid #ccc;border-right:1px solid #ccc;overflow:hidden;text-overflow:ellipsis;}th{background-color:#01485E;color:white;font-weight:bold;position:sticky;top:0;z-index:2;}tr:hover{background-color:#f5f5f5;}th:last-child,td:last-child{border-right:none;}#tabla-sucursales th:nth-child(2),#tabla-sucursales td:nth-child(2){text-align:left;}#tabla-sucursales th:nth-child(3),#tabla-sucursales td:nth-child(3){white-space:normal;}#tabla-sucursales th:nth-child(4),#tabla-sucursales td:nth-child(4),#tabla-sucursales th:nth-child(5),#tabla-sucursales td:nth-child(5){white-space:nowrap;}.input-medio{width:250px;}.input-largo{width:400px;}.input-comuna{width:30ch;}.input-region{width:28ch;}.input-rut{width:13ch;}.input-telefono{width:11ch;}.input-nombre-encargado{width:50ch;}.input-correo-encargado{width:38ch;}.fila-encargado{display:flex;gap:20px;margin-top:20px;}td.acciones{display:flex;justify-content:center;align-items:center;gap:10px;min-width:150px;}.acciones button{background:none;border:none;font-size:18px;cursor:pointer;padding:6px;color:#01485E;}.acciones button:hover{transform:scale(1.2);color:#0288D1;}.section-title{font-weight:bold;font-size:18px;color:#01485E;border-bottom:3px solid #01485E;padding-bottom:6px;margin:30px 0 20px 0;}table.dataTable thead th{text-align:center !important;}.dataTables_length select{width:70px !important;display:inline-block;margin:0 6px;}.dataTables_length{display:flex;align-items:center;gap:6px;font-weight:bold;}.dataTables_filter{display:flex;align-items:center;gap:6px;font-weight:bold;}.dataTables_filter input{width:200px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;}#botonCancelar{display:none !important;}</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>Mantenedor de Sucursales</h1>
+  <form id="formSucursal">
+	<div style="grid-column: 1 / -1; width: 100%; margin-bottom: 20px;">
+	  <h2 style="color: #01485E; font-size: 18px; margin-bottom: 6px;">Datos de la Sucursal</h2>
+	  <div style="height: 3px; background-color: #01485E; width: 100%;"></div>
+	</div>
+
+	<div style="display: flex; gap: 20px; width: 100%; margin-bottom: 8px;">
+	  <div style="flex: 0 0 62%;">
+		<label for="farmacia_sucursal">Farmacia</label>
+		<select id="farmacia_sucursal" required style="width: 100%;"></select>
+	  </div>
+	  <div style="flex: 0 0 70%;">
+		<label for="nombre">Sucursal</label>
+		<input type="text" id="nombre" maxlength="50" required style="width: 100%;">
+	  </div>
+	  <div style="flex: 0 0 20%;">
+		<label for="telefono">Teléfono</label>
+		<input type="text" id="telefono" maxlength="9" pattern="[0-9]{9}" required style="width: 100%;">
+	  </div>
+	  <div style="flex: 0 0 40%;">
+		<label for="correo_sucursal">Correo Electrónico</label>
+		<input type="email" id="correo_sucursal" maxlength="40" style="width: 100%;">
+	  </div>
+	</div>
+
+	<div style="grid-column: 1 / 3; display: flex; gap: 20px; margin-bottom: 12px;">
+	  <div style="flex: 2;">
+		<label for="direccion">Dirección</label>
+		<input type="text" id="direccion" maxlength="80" style="width: 100%;" required>
+	  </div>
+	  <div style="flex: 1.2;">
+		<label for="comuna">Comuna</label>
+		<select id="comuna" onchange="asignarRegion()" style="width: 100%;" required>
+		  <option value="">Seleccione una Comuna</option>
+		</select>
+	  </div>
+	  <div style="flex: 1;">
+		<label for="region">Región</label>
+		<input type="text" id="region" readonly style="width: 100%;">
+	  </div>
+	</div>
+
+	<div style="grid-column: 1 / 3; display: flex; gap: 15px; margin-top: 10px;">
+	  <div style="flex: 0.6;">
+		<label for="rut_encargado">RUT Encargado</label>
+		<input type="text" id="rut_encargado" maxlength="10" required style="width: 100%;">
+	  </div>
+	  <div style="flex: 2;">
+		<label for="nombre_encargado">Nombre Encargado</label>
+		<input type="text" id="nombre_encargado" maxlength="50" required style="width: 100%;">
+	  </div>
+	  <div style="flex: 1;">
+		<label for="telefono_encargado">Teléfono Encargado</label>
+		<input type="text" id="telefono_encargado" maxlength="9" pattern="[0-9]{9}" required style="width: 100%;">
+	  </div>
+	  <div style="flex: 1.2;">
+		<label for="correo_encargado">Correo Encargado</label>
+		<input type="email" id="correo_encargado" maxlength="40" required style="width: 100%;">
+	  </div>
+	</div>
+
+	<div class="full-width" style="text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+	  <button type="submit" id="botonGuardar" style="background-color: #2E7D32; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+		💾 Guardar Sucursal
+	  </button>
+	  <button type="button" id="botonVolver" style="background-color: #0288D1; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+		🔙 Volver
+	  </button>
+	  <button type="button" id="botonCancelarEdicion" style="background-color: #FF7043; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+		🔄 Cancelar Edición
+	  </button>
+	</div>
+
+
+
+  </form>
+
+	<table id="tabla-sucursales" class="display nowrap" style="width:100%">
+	  <thead>
+		<tr>
+		  <th style="width: 15%;">Farmacia</th>
+		  <th>Nombre Sucursal</th>
+		  <th>Dirección</th>
+		  <th>Comuna</th>
+		  <th>Teléfono</th>
+		  <th>Acciones</th>
+		</tr>
+	  </thead>
+	  <tbody id="tablaSucursales"></tbody>
+	</table>
+
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Aquí debajo irá todo el JavaScript incluido -->
+<script>
+// --- Variables globales ---
+let idSucursalEditando = null;
+
+// --- Definición de regiones y comunas ---
+
+const regionesComunas = [
+  { region: "Región de Arica y Parinacota", comunas: ["Arica", "Camarones", "Putre", "General Lagos"] },
+  { region: "Región de Tarapacá", comunas: ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"] },
+  { region: "Región de Antofagasta", comunas: ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"] },
+  { region: "Región de Atacama", comunas: ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Freirina", "Huasco", "Alto del Carmen"] },
+  { region: "Región de Coquimbo", comunas: ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paiguano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"] },
+  { region: "Región Metropolitana", comunas: ["Santiago", "Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Til Til", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"] }
+  // Puedes seguir agregando más regiones si quieres
+];
+
+// --- Función para asignar región automáticamente ---
+function asignarRegion() {
+  const comunaSeleccionada = document.getElementById('comuna').value;
+  const region = regionesComunas.find(r => r.comunas.includes(comunaSeleccionada));
+  document.getElementById('region').value = region ? region.region : '';
+}
+
+// --- Mostrar Toast de notificación ---
+function mostrarToast(mensaje, tipo = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.textContent = mensaje;
+  toast.style.backgroundColor = tipo === 'success' ? '#4CAF50' : '#F44336';
+  toast.style.color = 'white';
+  toast.style.padding = '12px 20px';
+  toast.style.marginTop = '10px';
+  toast.style.borderRadius = '8px';
+  toast.style.boxShadow = '0px 4px 8px rgba(0,0,0,0.2)';
+  toast.style.opacity = '0';
+  toast.style.transform = 'translateX(100%)';
+  toast.style.transition = 'all 0.5s ease';
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(0)';
+  }, 100);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    setTimeout(() => container.removeChild(toast), 500);
+  }, 3000);
+}
+
+// --- Función para cargar farmacias ---
+async function cargarFarmacias() {
+  try {
+    const response = await fetch('/api/farmacias/listar');
+    if (!response.ok) throw new Error('Error al cargar farmacias');
+    const farmacias = await response.json();
+
+    const select = document.getElementById('farmacia_sucursal');
+    select.innerHTML = '<option value="">Seleccionar Farmacia</option>'; // ← NUEVA LÍNEA
+
+    farmacias.forEach(f => {
+      const option = document.createElement('option');
+      option.value = f.id;
+      option.textContent = f.razon_social;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error(error);
+    mostrarToast('Error al cargar farmacias', 'error');
+  }
+}
+
+
+// --- Función para cargar sucursales ---
+async function cargarSucursales() {
+  try {
+    const response = await fetch('/api/sucursales/listar');
+    if (!response.ok) throw new Error('Error al cargar sucursales');
+    const sucursales = await response.json();
+
+    // 1. Destruye si ya está inicializado
+    if ($.fn.DataTable.isDataTable('#tabla-sucursales')) {
+      $('#tabla-sucursales').DataTable().destroy();
+    }
+
+    // 2. Limpia el tbody
+    const tabla = document.getElementById('tablaSucursales');
+    tabla.innerHTML = '';
+
+    // 3. Agrega las nuevas filas
+    sucursales.forEach(sucursal => {
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${sucursal.farmacia}</td>
+        <td>${sucursal.nombre}</td>
+        <td>${sucursal.direccion}</td>
+        <td>${sucursal.comuna}</td>
+        <td>${sucursal.telefono}</td>
+        <td class="acciones">
+          <button onclick="editarSucursal(${sucursal.id})" title="Editar">✏️</button>
+          <button onclick="eliminarSucursal(${sucursal.id})" title="Eliminar">🗑️</button>
+          <button onclick="verEncargado(${sucursal.id})" title="Ver Encargado">👁️</button>
+        </td>
+      `;
+      tabla.appendChild(fila);
+    });
+
+    // 4. Re-inicializa DataTable
+    inicializarDataTableSucursales();
+
+  } catch (error) {
+    console.error(error);
+    mostrarToast('Error al cargar sucursales', 'error');
+  }
+}
+
+// --- Función para editar una sucursal ---
+async function editarSucursal(id) {
+  try {
+    const response = await fetch(`/api/sucursales/obtener/${id}`);
+    if (!response.ok) throw new Error('Error al obtener sucursal');
+    const data = await response.json();
+
+    console.log('DATA RECIBIDA', data);
+
+    idSucursalEditando = id;
+
+    // --- Cargar datos principales ---
+    if (data.id_farmacia) {
+      document.getElementById('farmacia_sucursal').value = data.id_farmacia;
+    } else {
+      document.getElementById('farmacia_sucursal').value = '';
+    }
+
+    document.getElementById('nombre').value = data.nombre || '';
+    document.getElementById('direccion').value = data.direccion || '';
+
+    // --- Seleccionar comuna ---
+    const comunaNormalizada = (data.comuna || '').trim().toLowerCase();
+    const selectComuna = document.getElementById('comuna');
+    let encontrada = false;
+    for (let i = 0; i < selectComuna.options.length; i++) {
+      if (selectComuna.options[i].value.trim().toLowerCase() === comunaNormalizada) {
+        selectComuna.selectedIndex = i;
+        encontrada = true;
+        break;
+      }
+    }
+    if (!encontrada) {
+      selectComuna.selectedIndex = 0;
+    }
+
+    document.getElementById('region').value = data.region || '';
+    document.getElementById('telefono').value = data.telefono || '';
+    document.getElementById('correo_sucursal').value = data.correo_sucursal || '';
+
+    // --- Cargar encargado ---
+    document.getElementById('rut_encargado').value = data.encargado_rut || '';
+    document.getElementById('nombre_encargado').value = data.encargado_nombre || '';
+    document.getElementById('telefono_encargado').value = data.encargado_telefono || '';
+    document.getElementById('correo_encargado').value = data.encargado_correo || '';
+
+    // --- Habilitar campos ---
+    const campos = [
+      'nombre', 'direccion', 'comuna', 'region', 'telefono', 'correo_sucursal',
+      'rut_encargado', 'nombre_encargado', 'telefono_encargado', 'correo_encargado'
+    ];
+    campos.forEach(id => {
+      document.getElementById(id).disabled = false;
+    });
+
+    document.getElementById('farmacia_sucursal').disabled = true;
+
+    // 🔁 Cambiar botón a modo edición
+    const botonGuardar = document.getElementById('botonGuardar');
+    botonGuardar.innerHTML = '♻️ Actualizar Sucursal';
+    botonGuardar.style.backgroundColor = '#FFA000';
+
+    document.getElementById('botonCancelarEdicion').style.display = 'inline-block';
+
+  } catch (error) {
+    console.error(error);
+    mostrarToast('Error al cargar datos de la sucursal', 'error');
+  }
+}
+
+
+
+
+// --- Función para eliminar una sucursal ---
+async function eliminarSucursal(id) {
+  if (confirm('¿Estás seguro de eliminar esta sucursal?')) {
+    try {
+      const response = await fetch(`/api/sucursales/eliminar/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error al eliminar sucursal');
+      }
+      mostrarToast('Sucursal eliminada correctamente');
+      cargarSucursales();
+    } catch (error) {
+      mostrarToast(error.message, 'error');
+    }
+  }
+}
+
+function cancelarEdicion() {
+  idSucursalEditando = null;
+  document.getElementById('formSucursal').reset();
+
+  // 🔁 Restaurar botón Guardar con ícono
+  const botonGuardar = document.getElementById('botonGuardar');
+  botonGuardar.innerHTML = '💾 Guardar Sucursal';
+  botonGuardar.style.backgroundColor = '#2E7D32';
+
+  // 🔁 Ocultar botón Cancelar Edición
+  document.getElementById('botonCancelarEdicion').style.display = 'none';
+  document.getElementById('farmacia_sucursal').disabled = false;
+  document.getElementById('farmacia_sucursal').value = '';
+  
+
+  // 🔐 Desactivar campos
+  const campos = [
+    'nombre', 'direccion', 'comuna', 'region', 'telefono',
+    'correo_sucursal', 'rut_encargado', 'nombre_encargado',
+    'telefono_encargado', 'correo_encargado'
+  ];
+  campos.forEach(c => document.getElementById(c).disabled = true);
+
+  // 🔓 Volver a habilitar selección de farmacia
+  document.getElementById('farmacia_sucursal').disabled = false;
+}
+
+
+// --- Función para ver encargado ---
+async function verEncargado(id) {
+  console.log("Clic en Ver encargado para ID:", id); // ya lo tenías
+
+  try {
+    const response = await fetch(`/api/sucursales/obtener/${id}`);
+    if (!response.ok) throw new Error('Error al obtener datos');
+
+    const data = await response.json();
+    console.log("📦 Datos recibidos del backend:", data); // ✅ NUEVA LÍNEA
+
+    if (!data.encargado_rut) { // <-- corregido aquí
+      mostrarToast('Esta sucursal no tiene encargado registrado', 'error');
+      return;
+    }
+
+    mostrarModalEncargado(data);
+
+  } catch (error) {
+    console.error(error);
+    mostrarToast('Error al cargar encargado', 'error');
+  }
+}
+
+// --- Inicialización de eventos ---
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('botonCancelarEdicion').style.display = 'none';
+
+  const campos = [
+    'farmacia_sucursal', 'nombre', 'direccion', 'comuna', 'region', 'telefono',
+    'correo_sucursal', 'rut_encargado', 'nombre_encargado', 'telefono_encargado', 'correo_encargado'
+  ];
+
+  document.getElementById('botonVolver').addEventListener('click', () => {
+    window.location.href = '/dashboard';
+  });
+
+  cargarFarmacias();
+  cargarSucursales();
+  cargarComunas();
+  document.getElementById('botonCancelarEdicion').addEventListener('click', cancelarEdicion);
+
+  document.getElementById('formSucursal').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    // Validación: todos los campos deben estar completos
+    for (const id of campos) {
+      const campo = document.getElementById(id);
+      if (!campo.value.trim()) {
+        mostrarToast(`El campo "${campo.previousElementSibling.textContent}" es obligatorio.`, 'error');
+        campo.focus();
+        return;
+      }
+    }
+
+    const url = idSucursalEditando
+      ? `/api/sucursales/editar/${idSucursalEditando}`
+      : '/api/sucursales/crear';
+    const metodo = idSucursalEditando ? 'PUT' : 'POST';
+
+    const datos = {
+      id_farmacia: document.getElementById('farmacia_sucursal').value,
+      nombre: document.getElementById('nombre').value,
+      direccion: document.getElementById('direccion').value,
+      comuna: document.getElementById('comuna').value,
+      region: document.getElementById('region').value,
+      telefono: document.getElementById('telefono').value,
+      correo_sucursal: document.getElementById('correo_sucursal').value,
+      rut_encargado: document.getElementById('rut_encargado').value,
+      nombre_encargado: document.getElementById('nombre_encargado').value,
+      telefono_encargado: document.getElementById('telefono_encargado').value,
+      correo_encargado: document.getElementById('correo_encargado').value
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+
+      if (!response.ok) throw new Error('Error al guardar');
+
+      mostrarToast(idSucursalEditando ? 'Sucursal actualizada correctamente' : 'Sucursal guardada correctamente');
+
+      document.getElementById('formSucursal').reset();
+
+      // Restaurar botones y estado
+      cancelarEdicion();
+      cargarSucursales();
+
+    } catch (error) {
+      console.error(error);
+      mostrarToast('Error al guardar sucursal', 'error');
+    }
+  });
+});
+
+
+
+// --- Cargar todas las comunas en el combo ---
+function cargarComunas() {
+  const comunaSelect = document.getElementById('comuna');
+  comunaSelect.innerHTML = '<option value="">Seleccione una Comuna</option>';
+
+  regionesComunas.forEach(region => {
+    region.comunas.forEach(comuna => {
+      const option = document.createElement('option');
+      option.value = comuna;
+      option.textContent = comuna;
+      comunaSelect.appendChild(option);
+    });
+  });
+}
+
+function mostrarModalEncargado(info) {
+  const modal = document.getElementById('modalEncargado');
+  const contenido = document.getElementById('contenidoEncargado');
+
+  contenido.innerHTML = `
+    <p><strong>RUT:</strong> ${info.encargado_rut || 'No registrado'}</p>
+    <p><strong>Nombre:</strong> ${info.encargado_nombre || 'No registrado'}</p>
+    <p><strong>Teléfono:</strong> ${info.encargado_telefono || 'No registrado'}</p>
+    <p><strong>Correo:</strong> ${info.encargado_correo || 'No registrado'}</p>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+
+function cerrarModalEncargado() {
+  document.getElementById('modalEncargado').style.display = 'none';
+}
+
+function inicializarDataTableSucursales() {
+  $('#tabla-sucursales').DataTable({
+    destroy: true,
+    pageLength: 15,
+    lengthMenu: [15, 30, 50, 100],
+    language: {
+      lengthMenu: `
+        <span style="white-space: nowrap;">
+          Mostrar _MENU_ registros por página
+        </span>
+      `,
+      zeroRecords: "No se encontraron resultados",
+      info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+      infoEmpty: "No hay registros disponibles",
+      infoFiltered: "(filtrado de _MAX_ registros totales)",
+      search: "Buscar:",
+      paginate: {
+        first: "Primero",
+        last: "Último",
+        next: "Siguiente",
+        previous: "Anterior"
+      }
+    },
+	columnDefs: [
+	  { targets: 0, width: "25%" }, // Farmacia (ancho mayor para nombres largos)
+	  { targets: 1, className: "text-start" }, // Sucursal alineada a la izquierda
+	  { targets: 3, width: "1%", className: "text-nowrap" }, // Comuna ajustada al contenido
+	  { targets: 4, width: "1%", className: "text-nowrap" }, // Teléfono ajustado al contenido
+	  { targets: "_all", className: "text-center" }
+	]
+  });
+}
+
+
+
+
+
+</script>
+
+<!-- Modal Encargado -->
+<div id="modalEncargado" style="display:none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:1000; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); max-width: 400px; width: 90%; text-align: center; position: relative;">
+    <h2 style="margin-top: 0; color: #004D40;">Datos del Encargado</h2>
+    <div id="contenidoEncargado" style="margin: 20px 0; text-align: left; color: #333;"></div>
+    <button onclick="cerrarModalEncargado()" style="background-color: #00796B; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">Cerrar</button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Recordatorio de Tratamiento</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header img {
+      max-height: 80px;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+    }
+    .highlight {
+      color: #C02B2A;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://tu-dominio.com/static/images/Go%20Farma%20Logo%20Final_logo%202.png" alt="GoFarma">
+    </div>
+    <div class="content">
+      <p>Estimado/a <strong>{{ nombre }}</strong>,</p>
+
+      <p>Queremos recordarte que tu tratamiento con el medicamento <span class="highlight">{{ medicamento }}</span> está próximo a finalizar.</p>
+
+      <p>Para evitar interrupciones en tu tratamiento, te recomendamos acercarte a la farmacia para su renovación.</p>
+
+      <p>Si necesitas ayuda, contáctanos o visita nuestra farmacia más cercana.</p>
+
+      <p>Gracias por confiar en <strong>GoFarma</strong>.</p>
+    </div>
+
+    <div class="footer">
+      Este correo fue generado automáticamente por el sistema FarmaServicios. Por favor, no respondas a este mensaje.
+    </div>
+  </div>
+</body>
+</html>

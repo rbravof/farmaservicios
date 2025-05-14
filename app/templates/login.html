@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | FarmaServicios</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      width: 400px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .login-container img {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .login-container h1 {
+      margin-bottom: 30px;
+      color: #004D40;
+      font-size: 28px;
+    }
+
+    .login-container input[type="text"],
+    .login-container input[type="password"] {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .login-container button {
+      width: 100%;
+      background-color: #00796B;
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-container button:hover {
+      background-color: #004D40;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .password-container span {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .error-msg {
+      color: red;
+      margin-top: 10px;
+      display: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+	<div class="login-container">
+	  <img src="/static/img/logo.png" alt="Logo FarmaServicios">
+	  <h1>FarmaServicios</h1>
+	  <input type="text" id="username" placeholder="Usuario">
+
+	  <div class="password-container">
+		<input type="password" id="password" placeholder="Contraseña">
+		<span onclick="togglePassword()">👁️</span>
+	  </div>
+
+	  <button onclick="login()">Ingresar</button>
+	  <p class="error-msg" id="error-msg">Usuario o contraseña incorrecta</p>
+
+	  <!-- Enlace para recuperar contraseña -->
+	  <div style="text-align:center; margin-top: 15px;">
+		<a href="#" onclick="mostrarRecuperarPassword()" style="color: #007bff; text-decoration: none;">
+		  ¿Olvidaste tu contraseña?
+		</a>
+	  </div>
+	</div>
+
+	<!-- Modal de recuperación de contraseña -->
+	<div id="modalRecuperar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+	  <div style="background:white; padding:30px; border-radius:10px; width:400px; max-width:90%; box-shadow:0 0 12px rgba(0,0,0,0.2);">
+		<h3 style="margin-top:0;">🔐 Recuperar Contraseña</h3>
+		<p>Ingresa tu correo y te enviaremos un enlace para restablecer tu clave.</p>
+		<input type="email" id="correoRecuperacion" placeholder="Correo electrónico" style="width:100%; padding:10px; margin-top:10px; margin-bottom:20px; border:1px solid #ccc; border-radius:6px;">
+		<div style="text-align:right;">
+		  <button onclick="cerrarModalRecuperar()" style="background:#ccc; border:none; padding:10px 15px; border-radius:6px; margin-right:10px;">
+		    <i class="fas fa-times-circle" style="margin-right:6px;"></i> Cancelar
+		  </button>
+
+		  <button id="btnEnviarCorreo" style="background:#007bff; color:white; border:none; padding:10px 15px; border-radius:6px;">
+			<i class="fas fa-paper-plane" style="margin-right:6px;"></i> Enviar
+		  </button>
+
+		</div>
+	  </div>
+	</div>
+
+
+<script type="module">
+
+  // 💥 Definimos urls directamente aquí
+	const urls = {
+	  LOGIN: "/api/usuarios/login"
+	};
+
+	function mostrarRecuperarPassword() {
+	  console.log("✅ Mostrando modal...");
+	  document.getElementById("modalRecuperar").style.display = "flex";
+	}
+	window.mostrarRecuperarPassword = mostrarRecuperarPassword;
+
+
+	function cerrarModalRecuperar() {
+	  document.getElementById("modalRecuperar").style.display = "none";
+	}
+	window.cerrarModalRecuperar = cerrarModalRecuperar;
+
+	async function enviarCorreoRecuperacion() {
+	  console.log("🔁 Ejecutando enviarCorreoRecuperacion...");
+	  const correo = document.getElementById("correoRecuperacion").value.trim();
+	  if (!correo) {
+		alert("⚠️ Debes ingresar un correo válido.");
+		return;
+	  }
+
+	  try {
+		const res = await fetch("/api/usuarios/recuperar-password", {
+		  method: "POST",
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify({ correo })
+		});
+
+		if (res.ok) {
+		  alert("✅ Se ha enviado un enlace de recuperación a tu correo.");
+		  cerrarModalRecuperar();
+		} else {
+		  const error = await res.json();
+		  alert("❌ Error: " + (error.detail || "No se pudo enviar el correo."));
+		}
+	  } catch (err) {
+		console.error("❌ Error de conexión:", err);
+		alert("❌ No se pudo conectar con el servidor.");
+	  }
+	}
+	window.enviarCorreoRecuperacion = enviarCorreoRecuperacion;
+
+
+  async function login() {
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    const errorMsg = document.getElementById("error-msg");
+
+    if (!user || !pass) {
+      errorMsg.textContent = "Debes completar ambos campos.";
+      errorMsg.style.display = "block";
+      return;
+    }
+
+    const body = {
+      usuario: user,
+      contrasena: pass
+    };
+
+    try {
+      const response = await fetch(urls.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+	  if (!response.ok) {
+	    const errorData = await response.json();
+	    errorMsg.textContent = errorData.detail || "Usuario o contraseña incorrecta.";
+	    errorMsg.style.display = "block";
+	    return;
+	  }
+
+      const data = await response.json();
+      localStorage.setItem("usuario", JSON.stringify(data));
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
+      errorMsg.textContent = "Ocurrió un error. Intenta nuevamente.";
+      errorMsg.style.display = "block";
+    }
+  }
+
+  window.login = login;
+
+  window.togglePassword = function() {
+    const passwordInput = document.getElementById("password");
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+    } else {
+      passwordInput.type = "password";
+    }
+  };
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro del Encargado</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 40px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input, select {
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: 0.3s;
+    }
+    input:focus, select:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 8px rgba(25, 118, 210, 0.4);
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.3s;
+    }
+    .save-button { background-color: #28a745; color: white; }
+    .save-button:hover { background-color: #218838; }
+    .btn-registro-paciente { background-color: #6c757d; color: white; }
+    .btn-registro-paciente:hover { background-color: #5a6268; }
+    .btn-limpiar { background-color: #ffc107; color: black; }
+    .btn-limpiar:hover { background-color: #e0a800; }
+    .error-msg {
+      color: red;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Registro del Encargado</h2>
+  <form id="form-encargado">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>RUT del Paciente</label>
+        <input id="rut_paciente" readonly />
+      </div>
+      <div class="form-group">
+        <label>Nombre del Paciente</label>
+        <input id="nombre_paciente" readonly />
+      </div>
+      <div class="form-group">
+        <label>RUT del Encargado</label>
+        <input id="rut_encargado" maxlength="10" onblur="validarRut(this)" />
+        <span class="error-msg" id="error-rut-encargado">❌ RUT inválido</span>
+      </div>
+      <div class="form-group">
+        <label>Nombre del Encargado</label>
+        <input id="nombre_encargado" maxlength="90" />
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>Dirección</label>
+        <input id="direccion_encargado" maxlength="120" />
+      </div>
+      <div class="form-group">
+        <label>Comuna</label>
+        <select id="comuna_encargado"></select>
+      </div>
+      <div class="form-group">
+        <label>Parentesco</label>
+        <select id="parentesco">
+          <option value="">Seleccione</option>
+          <option>Hijo(a)</option>
+          <option>Padre</option>
+          <option>Madre</option>
+          <option>Abuelo</option>
+          <option>Abuela</option>
+          <option>Cuidador</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input id="telefono_encargado" maxlength="9" />
+      </div>
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input id="correo_encargado" maxlength="100" type="email" />
+      </div>
+    </div>
+    <div class="buttons">
+      <button type="submit" class="save-button">💾 Guardar Encargado</button>
+      <button type="button" class="btn-limpiar" onclick="limpiarFormulario()">🧹 Limpiar Datos</button>
+      <button type="button" class="btn-registro-paciente" onclick="window.location.href='/registro-pacientes'">↩️ Volver a Registro de Paciente</button>
+    </div>
+  </form>
+</div>
+
+  <script type="module">
+    import urls from '/static/js/urls.js';
+    function validarRut(input) {
+      const rut = input.value.replace(/\./g, '').replace('-', '').toUpperCase();
+      const errorSpan = document.getElementById("error-rut-encargado");
+      if (rut.length < 8) {
+        errorSpan.style.display = "block";
+        return;
+      }
+      const cuerpo = rut.slice(0, -1);
+      const dv = rut.slice(-1);
+      let suma = 0, multiplo = 2;
+      for (let i = cuerpo.length - 1; i >= 0; i--) {
+        suma += parseInt(cuerpo[i]) * multiplo;
+        multiplo = multiplo < 7 ? multiplo + 1 : 2;
+      }
+      const dvEsperado = 11 - (suma % 11);
+      const dvCalc = dvEsperado === 11 ? "0" : dvEsperado === 10 ? "K" : dvEsperado.toString();
+      errorSpan.style.display = dv !== dvCalc ? "block" : "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const rutPaciente = localStorage.getItem("rutPaciente") || "";
+      const nombrePaciente = localStorage.getItem("nombrePaciente") || "";
+      document.getElementById("rut_paciente").value = rutPaciente;
+      document.getElementById("nombre_paciente").value = nombrePaciente;
+
+      const rutEditar = localStorage.getItem("rutEditarEncargado");
+      if (rutEditar) {
+        fetch(urls.ENCARGADOS_OBTENER(rutEditar))
+          .then(res => res.json())
+          .then(data => {
+            document.getElementById("rut_paciente").value = data.rut_paciente;
+            document.getElementById("nombre_paciente").value = data.nombre_paciente || "";
+            document.getElementById("rut_encargado").value = data.rut_encargado;
+            document.getElementById("nombre_encargado").value = data.nombre;
+            document.getElementById("direccion_encargado").value = data.direccion;
+            document.getElementById("comuna_encargado").value = data.comuna;
+            document.getElementById("telefono_encargado").value = data.telefono;
+            document.getElementById("correo_encargado").value = data.correo;
+            document.getElementById("parentesco").value = data.parentesco;
+          })
+          .catch(err => console.error("❌ Error al cargar encargado para edición:", err));
+      }
+
+      const comunas = ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba",
+        "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina",
+        "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa",
+        "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal",
+        "Recoleta", "Renca", "San Joaquín", "San Miguel", "San Ramón", "Santiago", "Vitacura", "Talagante"];
+      const comunaSelect = document.getElementById("comuna_encargado");
+      comunas.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c;
+        option.textContent = c;
+        comunaSelect.appendChild(option);
+      });
+    });
+
+    document.getElementById("form-encargado").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const form = document.getElementById("form-encargado");
+      const formData = new FormData(form);
+
+      if (!formData.get("rut_paciente") || !formData.get("rut_encargado") || !formData.get("nombre_encargado")) {
+        alert("⚠️ Faltan datos obligatorios. Verifica RUT del paciente, RUT del encargado y nombre del encargado.");
+        return;
+      }
+
+		  const esEdicion = localStorage.getItem("rutEditarEncargado") !== null;
+		  const url = esEdicion 
+			? urls.ENCARGADOS_EDITAR(formData.get("rut_paciente")) 
+			: urls.ENCARGADOS_CREAR;
+		  const metodo = esEdicion ? "PUT" : "POST";
+
+      try {
+        const response = await fetch(url, {
+          method: metodo,
+          body: formData
+        });
+
+        if (response.ok) {
+          alert("✅ Encargado guardado correctamente.");
+          localStorage.removeItem("rutEditarEncargado");
+          window.location.href = "/listado-pacientes";
+          form.reset();
+        } else {
+          const error = await response.json();
+          console.error("❌ Error detallado:", error);
+          if (Array.isArray(error.detail)) {
+            const mensajes = error.detail.map(e => `• ${e.loc[1]}: ${e.msg}`).join('\n');
+            alert("❌ Error al guardar encargado:\n" + mensajes);
+          } else {
+            alert("❌ Error al guardar encargado: " + (error.detail || JSON.stringify(error)));
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error de conexión:", error);
+        alert("❌ Error de conexión con el servidor.");
+      }
+    });
+	
+	function limpiarFormulario() {
+	  document.getElementById("rut_encargado").value = "";
+	  document.getElementById("nombre_encargado").value = "";
+	  document.getElementById("direccion_encargado").value = "";
+	  document.getElementById("comuna_encargado").value = "";
+	  document.getElementById("parentesco").value = "";
+	  document.getElementById("telefono_encargado").value = "";
+	  document.getElementById("correo_encargado").value = "";
+	  document.getElementById("error-rut-encargado").style.display = "none";
+	}
+	
+  </script>
+</body>
+</html>

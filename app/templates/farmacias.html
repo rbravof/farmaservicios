@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mantenedor de Farmacias</title>
+  <!-- DataTables CSS -->
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- jQuery y DataTables -->
+  <script src="/static/js/regiones_comunas.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:'Segoe UI',sans-serif;background-color:#f4f6f8;padding:40px;margin:0;}
+    h2{text-align:center;color:#01485E;margin-bottom:30px;}
+    h3 { margin-top: 30px; padding-bottom: 8px; border-bottom: 2px solid #01485E; color: #01485E; font-size: 20px; }
+    .form-container{background:#fff;max-width:1200px;margin:auto;padding:30px 40px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+    .form-row{display:flex;flex-wrap:wrap;gap:20px;margin-bottom:20px;justify-content:flex-start;}
+    .form-group{display:flex;flex-direction:column;flex-grow:1;min-width:180px;}
+    label{font-weight:600;margin-bottom:5px;}
+    input,select{background-color:#f9f9f9;border:1px solid #ccc;border-radius:6px;padding:10px;font-size:15px;transition:border-color 0.3s,box-shadow 0.3s;}
+    input:focus,select:focus{border-color:#00796B;box-shadow:0 0 5px rgba(0,121,107,0.3);outline:none;}
+    .input-10ch{flex-basis:18ch;}
+    .input-12ch{flex-basis:12ch;}
+    .input-20ch{flex-basis:20ch;}
+    .input-25ch{flex-basis:25ch;}
+    .input-30ch{flex-basis:30ch;}
+    .input-40ch{flex-basis:40ch;}
+    .input-60ch{flex-basis:60ch;}
+    .btn-guardar,.btn-volver{padding:12px 24px;border:none;border-radius:6px;cursor:pointer;height:46px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;}
+    .btn-guardar{background-color:#00796B;color:white;}
+    .btn-guardar:hover{background-color:#004D40;}
+    .btn-volver{background-color:#c62828;color:white;}
+    .btn-volver:hover{background-color:#8e0000;}
+    .toast{text-align:center;font-weight:bold;margin:10px auto;color:green;}
+    .error-msg{font-size:13px;color:red;margin-top:-5px;display:none;}
+    table{width:100%;border-collapse:collapse;margin-top:30px;}
+    th,td{padding:12px;border:1px solid #ddd;font-size:14px;}
+    th{background-color:#e0f2f1;font-weight:bold;}
+    table.dataTable thead th{background-color:#01485E;color:white;text-align:center;}
+    table.dataTable tbody td{text-align:center;}
+    table.dataTable tbody td:nth-child(2){text-align:left;}
+    .acciones-btn{border:none;padding:6px 10px;margin:0 2px;border-radius:6px;cursor:pointer;font-size:14px;}
+    .acciones-btn.edit{background-color:#f57c00;color:white;}
+    .acciones-btn.delete{background-color:#c62828;color:white;}
+    .acciones-btn:hover{opacity:0.9;}
+    .form-actions{display:flex;justify-content:center;gap:20px;margin-top:20px;}
+    .table-container h3{text-align:left;color:#01485E;margin-bottom:10px;}
+  </style>
+
+</head>
+<body>
+<h2 class="text-center" style="margin-top: 0; margin-bottom: 40px;">Registro de Farmacias</h2>
+<div id="toast" class="toast"></div>
+	<form id="farmacia-form" class="form-container">
+	  <!-- Fila: Rut, Razon Social, Telefono, Correo -->
+	  <input type="hidden" id="farmacia_id" />
+	  <div class="form-row">
+		<div class="form-group input-10ch">
+		  <label for="rut">Rut</label>
+		  <input type="text" id="rut" maxlength="10" required />
+		</div>
+		<div class="form-group input-40ch">
+		  <label for="razon_social">Razón Social</label>
+		  <input type="text" id="razon_social" maxlength="80" required />
+		</div>
+		<div class="form-group input-12ch">
+		  <label for="telefono">Teléfono</label>
+		  <input type="text" id="telefono" maxlength="12" required />
+		</div>
+		<div class="form-group input-30ch">
+		  <label for="correo">Correo Electrónico</label>
+		  <input type="email" id="correo" maxlength="40" required />
+		</div>
+	  </div>
+
+	  <!-- Fila: Dirección, Comuna, Región -->
+	  <!-- Fila: Dirección, Comuna, Región -->
+		<div class="form-row" style="margin-bottom: 35px;">
+		  <div class="form-group input-40ch">
+			<label for="direccion">Dirección</label>
+			<input type="text" id="direccion" maxlength="100" placeholder="Ej: Av. Providencia 1234" required />
+		  </div>
+		  <div class="form-group input-20ch">
+			<label for="region">Región</label>
+			<select id="region" required>
+			  <option value="">Selecciona una región</option>
+			</select>
+		  </div>
+		  <div class="form-group input-20ch">
+			<label for="comuna">Comuna</label>
+			<select id="comuna" required>
+			  <option value="">Selecciona una comuna</option>
+			</select>
+		  </div>
+		</div>
+
+	  <h3>Encargado de la Farmacia</h3>
+	  <div class="form-row">
+		<div class="form-group input-10ch">
+		  <label for="enc_rut">RUT</label>
+		  <input type="text" id="enc_rut" maxlength="10" required onblur="verificarRut('enc_rut', 'error-enc-rut')" />
+		  <span id="error-enc-rut" class="error-msg">❌ RUT inválido</span>
+		</div>
+		<div class="form-group input-25ch">
+		  <label for="enc_nombre">Nombre</label>
+		  <input type="text" id="enc_nombre" maxlength="50" required />
+		</div>
+		<div class="form-group input-20ch">
+		  <label for="enc_telefono">Teléfono</label>
+		  <input type="text" id="enc_telefono" maxlength="12" required />
+		  <span id="error-enc-tel" class="error-msg">❌ Teléfono inválido</span>
+		</div>
+		<div class="form-group input-40ch">
+		  <label for="enc_correo">Correo</label>
+		  <input type="email" id="enc_correo" maxlength="60" required />
+		  <span id="error-enc-mail" class="error-msg">❌ Correo inválido</span>
+		</div>
+	  </div>
+
+	  <!-- Botones -->
+	<div class="full-width" style="text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+      <button type="submit" id="botonGuardar" style="background-color: #4CAF50; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+        ✅ Guardar Farmacia
+      </button>
+	  <button type="button" id="botonCancelarEdicion" style="background-color: #FF7043; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: none; align-items: center; gap: 6px; cursor: pointer;">
+	    🔄 Cancelar Edición
+  	  </button>
+	  <button type="button" id="botonVolver" style="background-color: #0288D1; color: white; padding: 10px 16px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer;" onclick="window.location.href='/dashboard'">
+	    🔙 Volver al Dashboard
+	  </button>
+
+	</div>
+
+
+
+	  <!-- Tabla dentro del formulario -->
+	  <div class="table-container">
+		<h3 style="text-align: left;">Listado de Farmacias</h3>
+		<table id="tabla-farmacias" class="display nowrap" style="width:100%">
+		  <thead>
+			<tr>
+			  <th>RUT</th>
+			  <th>Razón Social</th>
+			  <th>Comuna</th>
+			  <th>Teléfono</th>
+			  <th>Correo</th>
+			  <th>Acciones</th>
+			</tr>
+		  </thead>
+		  <tbody></tbody>
+		</table>
+	  </div>
+	</form>
+
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyATos1IHw_4eGqFIjdZpIREeBxf__BiM-s&libraries=places"></script>
+
+<script>
+  const regionSelect = document.getElementById("region");
+  const comunaSelect = document.getElementById("comuna");
+  const form = document.getElementById("farmacia-form");
+  const submitBtn = document.getElementById("botonGuardar");
+
+  function cargarRegionesYComunas() {
+    regionSelect.innerHTML = '<option value="">Selecciona una región</option>';
+    comunaSelect.innerHTML = '<option value="">Selecciona una comuna</option>';
+
+    regionesComunas.forEach(rc => {
+      const opt = document.createElement("option");
+      opt.value = rc.region;
+      opt.textContent = rc.region;
+      regionSelect.appendChild(opt);
+    });
+
+    regionSelect.addEventListener("change", () => {
+      const seleccionada = regionSelect.value;
+      const datos = regionesComunas.find(r => r.region === seleccionada);
+
+      comunaSelect.innerHTML = '<option value="">Selecciona una comuna</option>';
+      if (datos) {
+        datos.comunas.forEach(comuna => {
+          const opt = document.createElement("option");
+          opt.value = comuna;
+          opt.textContent = comuna;
+          comunaSelect.appendChild(opt);
+        });
+      }
+    });
+  }
+
+  function inicializarDataTableFarmacias() {
+    $('#tabla-farmacias').DataTable({
+      destroy: true,
+      pageLength: 15,
+      lengthMenu: [15, 30, 50, 100],
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "No hay registros disponibles",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        search: "Buscar:",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "Siguiente",
+          previous: "Anterior"
+        }
+      },
+      columnDefs: [
+        { targets: "_all", className: "text-center" },
+        { targets: [1], className: "text-start" }
+      ]
+    });
+  }
+
+	function cargarFarmacias() {
+	  fetch("/api/administracion/farmacias/")
+		  .then(res => res.json())
+		  .then(data => {
+		  console.log("📦 Farmacias cargadas:", data);
+
+		  if ($.fn.DataTable.isDataTable('#tabla-farmacias')) {
+			$('#tabla-farmacias').DataTable().destroy();
+		  }
+
+		  const tabla = document.querySelector("#tabla-farmacias tbody");
+		  tabla.innerHTML = "";
+
+		  data.forEach(f => {
+			const tr = document.createElement("tr");
+			tr.innerHTML = `
+			  <td>${f.rut}</td>
+			  <td>${f.razon_social}</td>
+			  <td>${f.comuna}</td>
+			  <td>${f.telefono}</td>
+			  <td>${f.correo}</td>
+			  <td class="actions">
+				<button class="edit-btn" data-id="${f.id}">✏️</button>
+				<button class="delete-btn" onclick='eliminarFarmacia(${f.id})'>🗑️</button>
+			  </td>`;
+			tabla.appendChild(tr);
+		  });
+
+		  inicializarDataTableFarmacias();
+
+		  document.querySelectorAll(".edit-btn").forEach(btn => {
+			btn.addEventListener("click", async () => {
+			  const id = btn.getAttribute("data-id");
+
+			  try {
+				const res = await fetch(`/api/farmacias/${id}`);
+
+				if (!res.ok) {
+				  const errText = await res.text();
+				  console.warn("⚠️ Advertencia del backend:", errText);
+				  // Pero si el código es 200, no lanzamos error.
+				  if (res.status >= 400) {
+					throw new Error("No se pudo obtener la farmacia");
+				  }
+				}
+
+				const data = await res.json();
+				console.log("✅ Datos de farmacia:", data);
+				editarFarmacia(data);
+
+			  } catch (error) {
+				console.error("❌ Error real:", error);
+				showToast("❌ Error al obtener datos de farmacia", "red");
+			  }
+			});
+
+		  });
+		})
+		.catch(() => {
+		  showToast("❌ No se pudo cargar farmacias", "red");
+		});
+	}
+
+
+function editarFarmacia(f) {
+  document.getElementById("farmacia_id").value = f.id;
+  document.getElementById("rut").value = f.rut || "";
+  document.getElementById("razon_social").value = f.razon_social || "";
+  document.getElementById("direccion").value = f.direccion || "";
+  document.getElementById("telefono").value = f.telefono || "";
+  document.getElementById("correo").value = f.correo || "";
+
+  // Encargado
+  document.getElementById("enc_rut").value = f.encargado_rut || "";
+  document.getElementById("enc_nombre").value = f.encargado_nombre || "";
+  document.getElementById("enc_telefono").value = f.encargado_telefono || "";
+  document.getElementById("enc_correo").value = f.encargado_correo || "";
+
+  // Región
+  regionSelect.innerHTML = "";
+  const opcionRegion = document.createElement("option");
+  opcionRegion.value = f.region || "";
+  opcionRegion.textContent = f.region || "Región no especificada";
+  opcionRegion.selected = true;
+  regionSelect.appendChild(opcionRegion);
+
+  // Comuna
+  comunaSelect.innerHTML = "";
+  const opcionComuna = document.createElement("option");
+  opcionComuna.value = f.comuna || "";
+  opcionComuna.textContent = f.comuna || "Comuna no especificada";
+  opcionComuna.selected = true;
+  comunaSelect.appendChild(opcionComuna);
+
+  submitBtn.innerHTML = "🔄 Actualizar Farmacia";
+  document.getElementById("botonCancelarEdicion").style.display = "inline-flex";
+
+}
+
+async function eliminarFarmacia(id) {
+  if (confirm("¿Estás seguro de eliminar esta farmacia?")) {
+    try {
+      const response = await fetch(`/api/farmacias/eliminar/${id}`, { method: 'DELETE' });
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (response.status === 400) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Acción no permitida',
+            text: error.detail,
+            confirmButtonColor: '#3085d6'
+          });
+        } else {
+          throw new Error(error.detail || 'Error al eliminar la farmacia');
+        }
+        return;
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Eliminado',
+        text: 'Farmacia eliminada exitosamente',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      cargarFarmacias(); // o refrescar la grilla
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar la farmacia, ya existe un o mas sucursales asociadas'
+      });
+    }
+  }
+}
+
+
+
+
+
+
+  function showToast(message, color = "green") {
+    const toast = document.getElementById("toast");
+    toast.style.color = color;
+    toast.textContent = message;
+    setTimeout(() => toast.textContent = "", 3000);
+  }
+
+  function verificarRut(inputId, errorId) {
+    const rut = document.getElementById(inputId).value;
+    const error = document.getElementById(errorId);
+    const regex = /^[0-9]+-[0-9Kk]$/;
+    error.style.display = (!rut || regex.test(rut)) ? "none" : "block";
+  }
+
+	form.addEventListener("submit", async (e) => {
+	  e.preventDefault();
+
+	  const idField = document.getElementById("farmacia_id");
+	  const id = idField ? idField.value : "";
+
+	  const data = {
+		rut: document.getElementById("rut")?.value || "",
+		razon_social: document.getElementById("razon_social")?.value || "",
+		direccion: document.getElementById("direccion")?.value || "",
+		region: regionSelect?.value || "",
+		comuna: comunaSelect?.value || "",
+		telefono: document.getElementById("telefono")?.value || "",
+		correo: document.getElementById("correo")?.value || "",
+		encargado_rut: document.getElementById("enc_rut")?.value || "",
+		encargado_nombre: document.getElementById("enc_nombre")?.value || "",
+		encargado_telefono: document.getElementById("enc_telefono")?.value || "",
+		encargado_correo: document.getElementById("enc_correo")?.value || ""
+	  };
+
+	  const url = id ? `/api/administracion/farmacias/${id}` : `/api/administracion/farmacias/`;
+	  const method = id ? "PUT" : "POST";
+
+	  try {
+		const res = await fetch(url, {
+		  method,
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify(data),
+		});
+
+		if (!res.ok) throw new Error("Error en la solicitud");
+
+		showToast(id ? "✅ Farmacia actualizada" : "✅ Farmacia guardada");
+		form.reset();
+		if (idField) idField.value = "";
+		submitBtn.textContent = "Guardar Farmacia";
+		cargarFarmacias();
+	  } catch {
+		showToast("❌ Error al guardar", "red");
+	  }
+	});
+
+	document.getElementById("botonCancelarEdicion").addEventListener("click", () => {
+	  form.reset(); // Limpia campos
+	  document.getElementById("farmacia_id").value = "";
+	  submitBtn.textContent = "Guardar Farmacia";
+	  cargarRegionesYComunas(); // vuelve a cargar combos iniciales
+	  document.getElementById("botonCancelarEdicion").style.display = "none";
+	});
+
+
+  cargarRegionesYComunas();
+  cargarFarmacias();
+</script>
+
+</body>
+</html>

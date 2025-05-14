@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 Listado de Pacientes | FarmaServicios</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      padding: 40px;
+    }
+
+	#tablaPacientes td:nth-child(1),
+	#tablaPacientes td:nth-child(3),
+	#tablaPacientes td:nth-child(4),
+	#tablaPacientes td:nth-child(5),
+	#tablaPacientes td:nth-child(6),
+	#tablaPacientes td:nth-child(7),
+	#tablaPacientes td:nth-child(8) {
+	  text-align: center;
+	}
+
+
+	#tablaPacientes thead th {
+	  text-align: center;
+	}
+
+    h2 {
+      color: #01485E;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+	.tooltip-btn {
+	  position: relative;
+	}
+
+	.tooltip-btn::after {
+	  content: attr(data-tooltip);
+	  position: absolute;
+	  bottom: 125%; /* arriba del botón */
+	  left: 50%;
+	  transform: translateX(-50%);
+	  background-color: #333;
+	  color: #fff;
+	  padding: 6px 10px;
+	  border-radius: 6px;
+	  white-space: nowrap;
+	  font-size: 13px;
+	  opacity: 0;
+	  pointer-events: none;
+	  transition: opacity 0.3s;
+	  z-index: 10;
+	}
+
+	.tooltip-btn:hover::after {
+	  opacity: 1;
+	}
+
+    .button-container button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
+      color: white;
+    }
+	
+	.tratamiento-proximo {
+	  background-color: #fff3cd !important; /* amarillo claro */
+	}
+
+	#tablaPacientes td:nth-child(2) {
+	  white-space: nowrap;
+	  overflow: hidden;
+	  text-overflow: ellipsis;
+	  max-width: 250px;
+	}
+
+	.btn-dashboard {
+	  background-color: #01485E;
+	}
+	.btn-dashboard:hover {
+	  background-color: #01384a;
+	}
+
+    .btn-nuevo { background-color: #28a745; }
+    .btn-nuevo:hover { background-color: #218838; }
+
+    .action-btn {
+      font-size: 15px;
+      border-radius: 6px;
+      padding: 6px 10px;
+      border: none;
+      cursor: pointer;
+      margin: 0 2px;
+    }
+
+    .view-btn { background-color: #17a2b8; color: white; }
+    .view-btn:hover { background-color: #138496; }
+
+    .edit-btn { background-color: #ffc107; color: white; }
+    .edit-btn:hover { background-color: #e0a800; }
+
+    .delete-btn { background-color: #dc3545; color: white; }
+    .delete-btn:hover { background-color: #c82333; }
+
+    table.dataTable tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    .dataTables_wrapper .dt-buttons {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center;">📋 Pacientes Registrados</h2>
+  <div class="button-container">
+    <button class="btn-dashboard" onclick="window.location.href='/dashboard'">🏠 Volver al Dashboard</button>
+    <button class="btn-nuevo" onclick="nuevoPaciente()">➕ Nuevo Paciente</button>
+  </div>
+
+  <table id="tablaPacientes" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>RUT</th>
+        <th>Nombre</th>
+        <th>Edad</th>
+        <th>Comuna</th>
+        <th>Teléfono</th>
+        <th>Correo</th>
+        <th>Fecha Creación</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let pacientesConTratamientoPorVencer = [];
+	
+	async function cargarTratamientosPorVencer() {
+	  try {
+		const res = await fetch("/api/tratamientos/vencidos");
+		const data = await res.json();
+		pacientesConTratamientoPorVencer = data.map(t => t.rut);
+	  } catch (err) {
+		console.error("Error al obtener tratamientos por vencer:", err);
+	  }
+	}
+
+	
+    function nuevoPaciente() {
+      localStorage.removeItem("rutPacienteVer");
+      localStorage.removeItem("rutPacienteEditar");
+      window.location.href = "/pacientes";
+    }
+
+    function editarPaciente(rut) {
+      localStorage.setItem("rutPacienteEditar", rut);
+      window.location.href = "/pacientes";
+    }
+
+    function eliminarPaciente(rut) {
+      if (confirm("¿Seguro que quieres eliminar este paciente?")) {
+        fetch(`/api/pacientes/eliminar/${rut}`, { method: "DELETE" })
+          .then(res => {
+            if (res.ok) {
+              alert("✅ Paciente eliminado correctamente.");
+              cargarPacientes();
+            } else {
+              alert("❌ Error al eliminar paciente.");
+            }
+          });
+      }
+    }
+
+    function verPaciente(rut) {
+      localStorage.setItem("rutPacienteVer", rut);
+      localStorage.removeItem("rutPacienteEditar");
+      window.location.href = "/pacientes";
+    }
+
+    function formatearFecha(fechaIso) {
+      if (!fechaIso) return "-";
+      const fecha = new Date(fechaIso);
+      if (isNaN(fecha)) return "-";
+      const d = String(fecha.getDate()).padStart(2, '0');
+      const m = String(fecha.getMonth() + 1).padStart(2, '0');
+      const y = fecha.getFullYear();
+      return `${d}-${m}-${y}`;
+    }
+
+    async function cargarPacientes() {
+      const res = await fetch('/api/pacientes/listar-con-encargado');
+      const data = await res.json();
+      const tabla = $('#tablaPacientes').DataTable();
+      tabla.clear();
+
+	  data.forEach(p => {
+		const esPorVencer = pacientesConTratamientoPorVencer.includes(p.rut);
+		const fila = tabla.row.add([
+			p.rut,
+			p.nombre,
+			p.edad,
+			p.comuna,
+			p.telefono,
+			p.correo,
+			formatearFecha(p.fecha_creacion),
+			`
+				<button class="action-btn view-btn tooltip-btn" onclick="verPaciente('${p.rut}')" data-tooltip="Ver paciente">👁️</button>
+				<button class="action-btn edit-btn tooltip-btn" onclick="editarPaciente('${p.rut}')" data-tooltip="Editar paciente">✏️</button>
+				<button class="action-btn delete-btn tooltip-btn" onclick="eliminarPaciente('${p.rut}')" data-tooltip="Eliminar paciente">🗑️</button>
+			`
+		]).node();
+
+		if (esPorVencer) {
+			fila.classList.add("tratamiento-proximo");
+		  }
+	  });
+      tabla.draw();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $('#tablaPacientes').DataTable({
+        data: [],
+        columns: [
+          { title: "RUT" },
+          { title: "Nombre" },
+          { title: "Edad" },
+          { title: "Comuna" },
+          { title: "Teléfono" },
+          { title: "Correo" },
+          { title: "Fecha Creación" },
+          { title: "Acciones" }
+        ],
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100],
+        dom: 'Bfrtip',
+        buttons: ['excelHtml5', 'pdfHtml5', 'print'],
+        language: { url: "/static/js/es-ES.json" }
+      });
+	  cargarTratamientosPorVencer();
+      cargarPacientes();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mantenedor de Productos</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 30px;
+      background-color: #f9f9f9;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      width: 70%;
+      max-width: none;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      overflow-x: auto;
+    }
+
+    .top-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .filter-group input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-group button, .btn-group a button {
+      background-color: #01485E;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-group button:hover, .btn-group a button:hover {
+      background-color: #012f3c;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #e6f1f5;
+    }
+
+    td.nombre-columna {
+      text-align: left;
+    }
+
+    .acciones-btns button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      margin: 0 4px;
+    }
+
+    .acciones-btns button:hover svg {
+      fill: #01485E;
+    }
+
+    .acciones-btns svg {
+      vertical-align: middle;
+      transition: fill 0.2s ease;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 450px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .popup-content input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .popup-content button {
+      background-color: #01485E;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .pagination {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      margin: 0 3px;
+      padding: 5px 10px;
+      background-color: #ddd;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination button.active {
+      background-color: #01485E;
+      color: white;
+    }
+
+    #filasPorPagina {
+      padding: 5px 10px;
+      margin-left: 10px;
+    }
+	
+	.form-row {
+	  display: flex;
+	  gap: 10px;
+	  margin-bottom: 10px;
+	}
+
+	.form-row input {
+	  flex: 1;
+	  padding: 8px;
+	  border-radius: 5px;
+	  border: 1px solid #ccc;
+	}
+
+	.btn-row {
+	  display: flex;
+	  justify-content: flex-end;
+	  gap: 10px;
+	  margin-top: 15px;
+	}
+
+	.btn-row button {
+	  padding: 8px 16px;
+	  border-radius: 5px;
+	  border: none;
+	  cursor: pointer;
+	  font-size: 14px;
+	}
+
+	.btn-guardar {
+	  background-color: #01485E;
+	  color: white;
+	}
+
+	.btn-cancelar {
+	  background-color: #c62828;
+	  color: white;
+	}
+
+	.input-codigo {
+	  width: 200px; /* Aproximadamente 20 caracteres */
+	}
+
+	.input-nombre {
+	  width: 100%;
+	  max-width: 200ch; /* Aproximadamente 100 caracteres visibles */
+	}
+	
+	.input-autocomplete {
+	  position: relative;
+	}
+
+	.sugerencias {
+	  list-style: none;
+	  padding: 0;
+	  margin: 0;
+	  max-height: 150px;
+	  overflow-y: auto;
+	  background: white;
+	  border: 1px solid #ccc;
+	  border-radius: 4px;
+	  position: absolute;
+	  width: 100%;
+	  z-index: 999;
+	}
+
+	.sugerencias li {
+	  padding: 6px 10px;
+	  cursor: pointer;
+	}
+
+	.sugerencias li:hover {
+	  background-color: #eee;
+	}
+
+	#sugerencias-principio:empty,
+	#sugerencias-laboratorio:empty,
+	#sugerencias-formato:empty {
+	  display: none;
+	}
+
+	#paginacion {
+	  display: flex;
+	  flex-wrap: wrap;
+	  gap: 6px;
+	  justify-content: center;
+	  margin-top: 20px;
+	}
+
+	#paginacion button {
+	  background-color: #e0e0e0;
+	  border: none;
+	  padding: 6px 12px;
+	  border-radius: 6px;
+	  font-weight: bold;
+	  cursor: pointer;
+	  transition: background-color 0.2s ease;
+	  min-width: 35px;
+	}
+
+	#paginacion button:hover {
+	  background-color: #bdbdbd;
+	}
+
+	#paginacion button:disabled {
+	  background-color: #cccccc;
+	  cursor: not-allowed;
+	}
+
+	.busqueda-avanzada {
+	  display: flex;
+	  gap: 10px;
+	  margin-bottom: 15px;
+	}
+
+	.busqueda-avanzada input {
+	  padding: 8px;
+	  border: 1px solid #ccc;
+	  border-radius: 5px;
+	  flex: 1;
+	}
+
+
+  </style>
+</head>
+<body>
+  <h2>Mantenedor de Productos</h2>
+  <div class="container">
+    <div class="top-toolbar">
+		<div class="busqueda-avanzada">
+		  <input type="text" id="buscar-codigo" placeholder="Buscar por Código">
+		  <input type="text" id="buscar-nombre" placeholder="Buscar por Nombre">
+		  <input type="text" id="buscar-principio" placeholder="Buscar por Principio Activo">
+		  <input type="text" id="buscar-laboratorio" placeholder="Buscar por Laboratorio">
+		</div>
+
+      <div class="btn-group">
+        <button id="agregar-producto">Agregar Producto</button>
+        <a href="/dashboard"><button>Volver al Dashboard</button></a>
+      </div>
+    </div>
+
+    <div style="text-align: right; margin-bottom: 10px;">
+      <label for="filasPorPagina">Filas por página:</label>
+      <select id="filasPorPagina">
+        <option value="20" selected>20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Principio Activo</th>
+          <th>Laboratorio</th>
+          <th>Formato</th>
+          <th>Precio Compra Neto</th>
+          <th>Precio Venta Neto</th>
+          <th>Precio Venta</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-productos"></tbody>
+    </table>
+
+    <div id="paginacion" style="margin-top: 20px;"></div>
+
+  </div>
+
+  
+	<!-- Pop-up para agregar producto -->
+	<div class="popup" id="popup">
+	  <div class="popup-content">
+		<h3 style="margin-top: 0;">Agregar Producto</h3>
+
+		<div class="form-row">
+		  <input type="text" id="codigo" maxlength="20" placeholder="Código de Barras" class="input-codigo">
+		  <input type="text" id="nombre" maxlength="100" placeholder="Nombre" class="input-nombre">
+		</div>
+
+
+		<div class="input-autocomplete">
+		  <input type="text" id="principio" placeholder="Principio Activo">
+		  <ul id="sugerencias-principio" class="sugerencias"></ul>
+		</div>
+
+
+		<div class="form-row input-autocomplete">
+		  <input type="text" id="laboratorio" placeholder="Laboratorio">
+		  <ul id="sugerencias-laboratorio" class="sugerencias"></ul>
+
+		  <input type="text" id="formato" placeholder="Formato">
+		  <ul id="sugerencias-formato" class="sugerencias"></ul>
+		</div>
+
+
+		<div class="form-row">
+		  <input type="number" id="compra" placeholder="Precio Compra Neto">
+		  <input type="number" id="venta_neto" placeholder="Precio Venta Neto">
+		  <input type="number" id="venta" placeholder="Precio Venta">
+		</div>
+
+		<div class="btn-row">
+		  <button onclick="guardarProducto()" class="btn-guardar">Guardar</button>
+		  <button onclick="cerrarPopup()" class="btn-cancelar">Cancelar</button>
+		</div>
+	  </div>
+	</div>
+
+
+
+  <script type="module">
+    import urls from '/static/js/urls.js';
+    document.getElementById("agregar-producto").addEventListener("click", () => {
+      document.getElementById("popup").style.display = "flex";
+    });
+
+    function cerrarPopup() {
+      const campos = ["codigo", "nombre", "principio", "laboratorio", "formato", "compra", "venta_neto", "venta"];
+      const algunoTieneDatos = campos.some(id => document.getElementById(id).value.trim() !== "");
+      if (algunoTieneDatos) {
+        if (!confirm("Hay datos ingresados. ¿Seguro que deseas cerrar sin guardar?")) return;
+      }
+      document.getElementById("popup").style.display = "none";
+      campos.forEach(id => document.getElementById(id).value = "");
+    }
+
+    function guardarProducto() {
+      alert("Producto guardado (simulado)");
+      cerrarPopup();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabla = document.getElementById("tabla-productos");
+      const paginacion = document.getElementById("paginacion");
+      const filasSelect = document.getElementById("filasPorPagina");
+
+      let productos = [];
+      let paginaActual = 1;
+      let filasPorPagina = parseInt(filasSelect.value);
+
+      filasSelect.addEventListener("change", () => {
+        filasPorPagina = parseInt(filasSelect.value);
+        paginaActual = 1;
+        renderTabla();
+      });
+
+      function renderTabla() {
+        tabla.innerHTML = "";
+        const inicio = (paginaActual - 1) * filasPorPagina;
+        const fin = inicio + filasPorPagina;
+        const paginaProductos = productos.slice(inicio, fin);
+
+        paginaProductos.forEach(producto => {
+          const fila = document.createElement("tr");
+          fila.innerHTML = `
+            <td>${producto.codigo}</td>
+            <td class="nombre-columna">${producto.nombre}</td>
+            <td>${producto.principio_activo}</td>
+            <td>${producto.laboratorio}</td>
+            <td>${producto.formato}</td>
+            <td>${producto.precio_compra_neto}</td>
+            <td>${producto.precio_venta_neto}</td>
+            <td>${producto.precio_venta}</td>
+            <td class="acciones-btns">
+              <button class="btn-editar" title="Editar">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 21h4l10.5-10.5-4-4L4 17v4zM21.7 6.3a1 1 0 0 0 0-1.4l-2.6-2.6a1 1 0 0 0-1.4 0l-1.8 1.8 4 4 1.8-1.8z"/>
+                </svg>
+              </button>
+              <button class="btn-eliminar" title="Eliminar">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 3v1H4v2h1v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm2 5h2v10h-2V8zm-4 0h2v10H7V8zm8 0h2v10h-2V8z"/>
+                </svg>
+              </button>
+            </td>
+          `;
+          tabla.appendChild(fila);
+        });
+
+        renderPaginacion();
+      }
+
+	  function renderPaginacion() {
+		 const totalPaginas = Math.ceil(productos.length / filasPorPagina);
+		 crearPaginacionElegante(totalPaginas, paginaActual, (nuevaPagina) => {
+		   paginaActual = nuevaPagina;
+		   renderTabla();
+		 });
+	  }
+
+
+      fetch(urls.CATALOGO_LISTAR)
+        .then(res => res.json())
+        .then(data => {
+          productos = data;
+          renderTabla();
+        })
+        .catch(err => {
+          console.error("❌ Error al cargar productos:", err);
+          tabla.innerHTML = `<tr><td colspan="9">Error al cargar productos.</td></tr>`;
+        });
+    });
+	const setupAutocomplete = (inputId, ulId, endpoint) => {
+	  const input = document.getElementById(inputId);
+	  const ul = document.getElementById(ulId);
+
+	  input.addEventListener("input", () => {
+		const valor = input.value.trim();
+
+		if (valor.length < 2) {
+		  ul.innerHTML = "";
+		  return;
+		}
+
+		fetch(`${endpoint}?q=${encodeURIComponent(valor)}`)
+		  .then(res => res.json())
+		  .then(data => {
+			if (!Array.isArray(data)) return;
+			ul.innerHTML = "";
+			data.forEach(item => {
+			  const li = document.createElement("li");
+			  li.textContent = item;
+			  li.addEventListener("click", () => {
+				input.value = item;
+				ul.innerHTML = "";
+			  });
+			  ul.appendChild(li);
+			});
+		  });
+	  });
+	};
+
+	setupAutocomplete("principio", "sugerencias-principio", urls.CATALOGO_BUSCAR_PRINCIPIOS);
+	setupAutocomplete("laboratorio", "sugerencias-laboratorio", urls.CATALOGO_BUSCAR_LABORATORIOS);
+	setupAutocomplete("formato", "sugerencias-formato", urls.CATALOGO_BUSCAR_FORMATOS);
+
+	
+	function crearPaginacionElegante(totalPaginas, paginaActual, cambiarPaginaCallback) {
+	  const contenedor = document.getElementById("paginacion");
+	  contenedor.innerHTML = "";
+
+	  const maxVisible = 5;
+	  let start = Math.max(1, paginaActual - 2);
+	  let end = Math.min(totalPaginas, paginaActual + 2);
+
+	  if (paginaActual <= 3) {
+		end = Math.min(5, totalPaginas);
+	  }
+
+	  if (paginaActual >= totalPaginas - 2) {
+		start = Math.max(1, totalPaginas - 4);
+	  }
+
+	  if (paginaActual > 1) {
+		const btnFirst = document.createElement("button");
+		btnFirst.innerText = "<<";
+		btnFirst.onclick = () => cambiarPaginaCallback(1);
+		contenedor.appendChild(btnFirst);
+
+		const btnPrev = document.createElement("button");
+		btnPrev.innerText = "<";
+		btnPrev.onclick = () => cambiarPaginaCallback(paginaActual - 1);
+		contenedor.appendChild(btnPrev);
+	  }
+
+	  for (let i = start; i <= end; i++) {
+		const btn = document.createElement("button");
+		btn.innerText = i;
+		if (i === paginaActual) {
+		  btn.style.backgroundColor = "#01485E";
+		  btn.style.color = "#fff";
+		}
+		btn.onclick = () => cambiarPaginaCallback(i);
+		contenedor.appendChild(btn);
+	  }
+
+	  if (paginaActual < totalPaginas) {
+		const btnNext = document.createElement("button");
+		btnNext.innerText = ">";
+		btnNext.onclick = () => cambiarPaginaCallback(paginaActual + 1);
+		contenedor.appendChild(btnNext);
+
+		const btnLast = document.createElement("button");
+		btnLast.innerText = ">>";
+		btnLast.onclick = () => cambiarPaginaCallback(totalPaginas);
+		contenedor.appendChild(btnLast);
+	  }
+	}
+
+	function buscarProductos(campo, valor) {
+	  if (valor.length < 2) return; // Evita consultas vacías
+
+	    fetch(urls.PRODUCTOS_BUSCAR(valor, campo))
+			.then(res => res.json())
+			.then(data => {
+			  productos = data;
+			  paginaActual = 1;
+			  renderTabla();
+			})
+			  .catch(err => {
+				console.error("❌ Error buscando productos:", err);
+			});
+	}
+
+	document.getElementById("buscar-codigo").addEventListener("input", e => buscarProductos("codigo", e.target.value));
+	document.getElementById("buscar-nombre").addEventListener("input", e => buscarProductos("nombre", e.target.value));
+	document.getElementById("buscar-principio").addEventListener("input", e => buscarProductos("principio_activo", e.target.value));
+	document.getElementById("buscar-laboratorio").addEventListener("input", e => buscarProductos("laboratorio", e.target.value));
+
+	
+</script>
+  
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ver Tratamiento</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      padding: 40px;
+      margin: 0;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #01485E;
+      color: white;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      margin-right: 5px;
+      transition: 0.3s;
+    }
+    .btn-editar {
+      background-color: #ffc107;
+      color: #000;
+    }
+    .btn-editar:hover {
+      background-color: #e0a800;
+    }
+    .btn-eliminar {
+      background-color: #dc3545;
+    }
+    .btn-eliminar:hover {
+      background-color: #c82333;
+    }
+    .btn-volver {
+      background-color: #6c757d;
+      margin-top: 20px;
+    }
+    .btn-volver:hover {
+      background-color: #5a6268;
+    }
+	td.izquierda {
+	  text-align: left;
+	}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>💊 Tratamientos Registrados</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Medicamento</th>
+          <th>Cantidad</th>
+          <th>Dosis</th>
+          <th>Días</th>
+          <th>Fecha Fin</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaTratamientos"></tbody>
+    </table>
+    <div style="text-align:center;">
+      <button type="button" class="btn-volver" onclick="window.location.href='/listado-pacientes'">
+		🔙 Volver al Listado de Pacientes
+	  </button>
+    </div>
+  </div>
+
+<script>
+  const TRATAMIENTOS_POR_PACIENTE = (rut) => `/api/tratamientos/por-paciente/${rut}`;
+  const TRATAMIENTOS_ELIMINAR = (id) => `/api/tratamientos/eliminar/${id}`;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const rut = localStorage.getItem("rutPacienteTratamiento");
+    if (!rut) {
+      alert("⚠️ RUT del paciente no encontrado.");
+      window.location.href = '/listado-pacientes';
+      return;
+    }
+
+    try {
+      const response = await fetch(TRATAMIENTOS_POR_PACIENTE(rut));
+      if (!response.ok) throw new Error("No se pudo cargar tratamientos");
+      const tratamientos = await response.json();
+
+      console.log("Tratamientos recibidos:", tratamientos); // 🔵 AGREGADO PARA INSPECCIÓN
+
+      const tbody = document.getElementById("tablaTratamientos");
+      tbody.innerHTML = "";
+
+      if (tratamientos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">⚠️ No hay tratamientos registrados para este paciente.</td></tr>';
+        return;
+      }
+
+      tratamientos.forEach(t => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td class="izquierda">${t.nombre_medicamento}</td>
+          <td>${t.cantidad_por_caja}</td>
+          <td>${t.dosis_diaria}</td>
+          <td>${t.duracion_dias}</td>
+          <td>${t.fecha_fin}</td>
+          <td>
+            <button class="btn-editar" onclick="editarTratamiento(${t.id})">✏️ Editar</button>
+            <button class="btn-eliminar" onclick="eliminarTratamiento(${t.id})">🗑 Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(fila);
+      });
+    } catch (error) {
+      console.error("Error al cargar tratamientos:", error);
+      alert("❌ Error al cargar los tratamientos.");
+    }
+  });
+
+  function editarTratamiento(id) {
+    localStorage.setItem("tratamientoEditarId", id);
+    window.location.href = "/editar-tratamiento";
+  }
+
+  async function eliminarTratamiento(id) {
+    if (!confirm("⚠️ ¿Estás seguro que deseas eliminar este tratamiento?")) return;
+    try {
+      const response = await fetch(TRATAMIENTOS_ELIMINAR(id), { method: "DELETE" });
+      if (response.ok) {
+        alert("✅ Tratamiento eliminado correctamente.");
+        document.getElementById("tablaTratamientos").innerHTML = "";
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+      } else {
+        alert("❌ No se pudo eliminar el tratamiento.");
+      }
+    } catch (error) {
+      console.error("Error al eliminar tratamiento:", error);
+      alert("❌ Error al eliminar tratamiento.");
+    }
+  }
+</script>
+
+
+</body>
+</html>

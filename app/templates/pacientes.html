@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Paciente</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      text-align: center;
+      color: #01485E;
+      margin-bottom: 20px;
+    }
+    form > section {
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    input, select, textarea {
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    input[type="text"], input[type="email"], select, textarea {
+      width: auto;
+    }
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      font-size: 16px;
+    }
+	
+	.btn-guardar {
+	  background-color: #01485E;
+	  color: white;
+	  padding: 10px 16px;
+	  border: none;
+	  border-radius: 6px;
+	  font-weight: bold;
+	  font-size: 15px;
+	  cursor: pointer;
+	  transition: background-color 0.2s ease;
+	}
+	
+	.btn-guardar:hover {
+	  background-color: #013747;
+	}
+	
+	.btn-limpiar {
+	  background-color: #f0ad4e;
+	  color: white;
+	  padding: 10px 16px;
+	  border: none;
+	  border-radius: 6px;
+	  font-weight: bold;
+	  font-size: 15px;
+	  cursor: pointer;
+	  transition: background-color 0.2s ease;
+	}
+	
+	.btn-limpiar:hover {
+	  background-color: #ec971f;
+	}
+
+	.btn-volver {
+	  background-color: #6c757d;
+	  color: white;
+	  padding: 10px 16px;
+	  border: none;
+	  border-radius: 6px;
+	  font-weight: bold;
+	  font-size: 15px;
+	  cursor: pointer;
+	  transition: background-color 0.2s ease;
+	}
+
+	.btn-volver:hover {
+	  background-color: #5a6268;
+	}
+
+    .toggle-switch {
+      margin-bottom: 20px;
+    }
+	
+	.estado-icono {
+	  font-size: 18px;
+	  position: relative;
+	  top: 3px;
+	}
+
+	.btn-tratamiento {
+	  background-color: #FF7043 ;
+	  color: white;
+	  border: none;
+	  padding: 10px 16px;
+	  border-radius: 6px;
+	  cursor: pointer;
+	  font-size: 15px;
+	  font-weight: bold;
+	}
+
+	.btn-tratamiento:hover {
+	  background-color: #F4511E;
+	}
+	
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="container">
+  <h2>Registro de Paciente</h2>
+	<form id="formPaciente">
+	  <section>
+		<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+		  <div style="flex-grow: 1;">
+			<h3 style="text-align: left; color: #01485E; border-bottom: 2px solid #01485E; padding-bottom: 5px; margin: 0;">
+			  Datos del Paciente
+			</h3>
+		  </div>
+		</div>
+		<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; margin-bottom: 20px;">
+		  <div>
+			<label>RUT</label>
+			<input type="text" id="rutPaciente" maxlength="10" size="10" required>
+		  </div>
+		  <div>
+			<label>Nombre Completo</label>
+			<input type="text" id="nombrePaciente" maxlength="50" size="40" required>
+		  </div>
+		  <div>
+			<label>Fec. Nacimiento</label>
+			<input type="date" id="fechaNacimientoPaciente" required>
+		  </div>
+		  <div>
+			<label>Edad</label>
+			<input type="number" id="edadPaciente" style="width: 60px; text-align: center;" readonly>
+		  </div>
+		  <div>
+			<label>Teléfono</label>
+			<input type="text" id="telefonoPaciente" maxlength="10" size="10">
+		  </div>
+		  <div>
+			<label>Correo</label>
+			<input type="email" id="correoPaciente" maxlength="50" size="35">
+		  </div>
+		</div>
+
+
+		<div style="display: grid; grid-template-columns: 2fr 1fr 1fr 2fr; gap: 20px; margin-bottom: 20px;">
+
+		  <div>
+			<label>Dirección</label>
+			<input type="text" id="direccionPaciente" maxlength="70" style="width: 100%;">
+		  </div>
+		  <div>
+			<label>Comuna</label>
+			<input type="text" id="comunaPaciente" maxlength="25" style="width: 100%;">
+		  </div>
+		  <div>
+			<label>Región</label>
+			<input type="text" id="regionPaciente" maxlength="25" style="width: 100%;">
+		  </div>
+		  <div>
+			<label>Diagnóstico</label>
+			<input type="text" id="diagnosticoPaciente" maxlength="80" style="width: 100%;">
+		  </div>
+		</div>
+	  </section>
+		<section id="seccionEncargado">
+		  <h3 style="text-align: left; color: #01485E; border-bottom: 2px solid #01485E; padding-bottom: 5px; margin-bottom: 20px;">
+			Datos del Encargado
+		  </h3>
+		  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+			<div>
+			  <label>RUT Encargado</label>
+			  <input type="text" id="rut_encargado" maxlength="10" style="width: 100%;">
+			</div>
+			<div>
+			  <label>Nombre Encargado</label>
+			  <input type="text" id="nombre_encargado" maxlength="50" style="width: 100%;">
+			</div>
+			<div>
+			  <label>Teléfono Encargado</label>
+			  <input type="text" id="telefono_encargado" maxlength="10" style="width: 100%;">
+			</div>
+			<div>
+			  <label>Correo Encargado</label>
+			  <input type="email" id="correo_encargado" maxlength="50" style="width: 100%;">
+			</div>
+		  </div>
+
+		  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+			<div>
+			  <label>Dirección Encargado</label>
+			  <input type="text" id="direccionEncargado" maxlength="70" style="width: 100%;">
+			</div>
+			<div>
+			  <label>Comuna Encargado</label>
+			  <input type="text" id="comunaEncargado" maxlength="25" style="width: 100%;">
+			</div>
+			<div>
+			  <label>Parentesco</label>
+			  <select id="parentescoEncargado" style="width: 100%;">
+				<option value="">Seleccione</option>
+				<option value="Hijo (a)">Hijo (a)</option>
+				<option value="Padre">Padre</option>
+				<option value="Madre">Madre</option>
+				<option value="Abuelo">Abuelo</option>
+				<option value="Abuela">Abuela</option>
+				<option value="Cuidador">Cuidador</option>
+			  </select>
+			</div>
+		  </div>
+		</section>
+
+		<div class="button-group" style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; justify-content: flex-start;">
+		  <button type="submit" class="btn-guardar">
+		    <i class="fas fa-notes-medical" style="margin-right: 6px;"></i>Guardar Paciente
+		  </button>
+		  <button type="reset" class="btn-limpiar">
+		    <i class="fas fa-broom" style="margin-right: 6px;"></i>Limpiar Formulario
+		  </button>
+		  <button type="button" class="btn-volver" onclick="window.location.href='/listado-pacientes'">
+		    <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>Volver al Listado
+		  </button>
+		  <button type="button" class="btn-tratamiento" onclick="irATratamiento()">
+		    <i class="fas fa-capsules"></i> Agregar Tratamiento
+		  </button>
+
+
+		</div>
+	</form>
+</div>
+<script>
+  function deshabilitarTodoElFormulario() {
+    document.querySelectorAll("input, select, textarea, button[type='submit']").forEach(el => {
+      el.disabled = true;
+    });
+    document.querySelectorAll(".estado-icono").forEach(icono => icono.remove());
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const rutVer = localStorage.getItem("rutPacienteVer");
+    if (rutVer) {
+      try {
+        const res = await fetch(`/api/pacientes/por-rut/${rutVer}`);
+        const paciente = await res.json();
+
+        console.log("Paciente recibido:", paciente);
+
+        if (paciente.fecha_nacimiento) {
+          const fecha = new Date(paciente.fecha_nacimiento);
+          const yyyyMMdd = fecha.toISOString().split('T')[0];
+          document.getElementById("fechaNacimientoPaciente").value = yyyyMMdd;
+        }
+
+        document.getElementById("rutPaciente").value = paciente.rut || "";
+        document.getElementById("nombrePaciente").value = paciente.nombre || "";
+        document.getElementById("edadPaciente").value = paciente.edad || "";
+        document.getElementById("diagnosticoPaciente").value = paciente.diagnostico || "";
+        document.getElementById("correoPaciente").value = paciente.correo || "";
+        document.getElementById("telefonoPaciente").value = paciente.telefono || "";
+        document.getElementById("direccionPaciente").value = paciente.direccion || "";
+        document.getElementById("comunaPaciente").value = paciente.comuna || "";
+        document.getElementById("regionPaciente").value = paciente.region || "";
+
+        // Siempre mostrar sección del encargado
+		const encargadoRes = await fetch(`/api/encargados/por-paciente/${rutVer}`);
+		if (encargadoRes.ok) {
+		  const encargado = await encargadoRes.json();
+		  document.getElementById("rut_encargado").value = encargado.rut_encargado || "";
+		  document.getElementById("nombre_encargado").value = encargado.nombre || "";
+		  document.getElementById("telefono_encargado").value = encargado.telefono || "";
+		  document.getElementById("correo_encargado").value = encargado.correo || "";
+		  document.getElementById("direccionEncargado").value = encargado.direccion || "";
+		  document.getElementById("comunaEncargado").value = encargado.comuna || "";
+		  document.getElementById("parentescoEncargado").value = encargado.parentesco || "";
+		} else {
+		  // Vaciar los campos si no hay encargado
+		  document.getElementById("rut_encargado").value = "";
+		  document.getElementById("nombre_encargado").value = "";
+		  document.getElementById("apellidos_encargado").value = "";
+		  document.getElementById("telefono_encargado").value = "";
+		  document.getElementById("correo_encargado").value = "";
+		  document.getElementById("direccionEncargado").value = "";
+		  document.getElementById("comunaEncargado").value = "";
+		  document.getElementById("parentescoEncargado").value = "";
+		}
+
+		const parentesco = (encargado.parentesco || "").trim();
+		const select = document.getElementById("parentescoEncargado");
+		const opcion = Array.from(select.options).find(opt => opt.value.toLowerCase() === parentesco.toLowerCase());
+		if (opcion) {
+		  select.value = opcion.value;
+		}
+
+
+      //  deshabilitarTodoElFormulario();
+
+      } catch (err) {
+        console.error("Error cargando paciente:", err);
+      }
+    }
+
+    // Mostrar siempre la sección del encargado al cargar el formulario
+    document.getElementById("seccionEncargado").style.display = "block";
+  });
+
+  document.getElementById("fechaNacimientoPaciente").addEventListener("change", function () {
+    const fechaNacimiento = new Date(this.value);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const m = hoy.getMonth() - fechaNacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+      edad--;
+    }
+    document.getElementById("edadPaciente").value = edad >= 0 ? edad : "";
+  });
+
+  function validarRutChileno(rut) {
+    rut = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+    const cuerpo = rut.slice(0, -1);
+    const dv = rut.slice(-1);
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo.charAt(i)) * multiplo;
+      multiplo = multiplo < 7 ? multiplo + 1 : 2;
+    }
+
+    const dvEsperado = 11 - (suma % 11);
+    const dvCalc = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+    return dv === dvCalc;
+  }
+
+  function validarCorreo(correo) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(correo);
+  }
+
+  function mostrarEstado(input, valido) {
+    input.style.border = valido ? '2px solid green' : '2px solid red';
+    if (!input.nextElementSibling || !input.nextElementSibling.classList.contains("estado-icono")) {
+      const span = document.createElement("span");
+      span.classList.add("estado-icono");
+      span.style.marginLeft = "8px";
+      input.parentNode.appendChild(span);
+    }
+
+    input.nextElementSibling.textContent = valido ? '✅' : '❌';
+    input.nextElementSibling.style.color = valido ? 'green' : 'red';
+  }
+
+  document.getElementById("rutPaciente").addEventListener("blur", function () {
+    if (this.disabled) return;
+    const esValido = validarRutChileno(this.value);
+    mostrarEstado(this, esValido);
+  });
+
+  document.getElementById("correoPaciente").addEventListener("blur", function () {
+    if (this.disabled) return;
+    const esValido = validarCorreo(this.value);
+    mostrarEstado(this, esValido);
+  });
+
+	document.getElementById("formPaciente").addEventListener("submit", async function (event) {
+	  event.preventDefault();
+
+	  const rutPaciente = document.getElementById("rutPaciente").value.trim();
+
+	  const paciente = {
+		rut: rutPaciente,
+		nombre: document.getElementById("nombrePaciente").value.trim(),
+		fecha_nacimiento: document.getElementById("fechaNacimientoPaciente").value,
+		edad: parseInt(document.getElementById("edadPaciente").value),
+		telefono: document.getElementById("telefonoPaciente").value.trim(),
+		correo: document.getElementById("correoPaciente").value.trim(),
+		direccion: document.getElementById("direccionPaciente").value.trim(),
+		comuna: document.getElementById("comunaPaciente").value.trim(),
+		region: document.getElementById("regionPaciente").value.trim(),
+		diagnostico: document.getElementById("diagnosticoPaciente").value.trim()
+	  };
+
+	  if (!paciente.rut || !paciente.nombre || !paciente.fecha_nacimiento || isNaN(paciente.edad) ||
+		!paciente.telefono || !paciente.correo || !paciente.direccion || !paciente.comuna || !paciente.region) {
+		alert("⚠️ Debes llenar todos los campos obligatorios antes de guardar.");
+		return;
+	  }
+
+	  const url = event.target.dataset.editar === "true" ? `/api/pacientes/editar/${rutPaciente}` : "/api/pacientes/crear";
+	  const method = event.target.dataset.editar === "true" ? "PUT" : "POST";
+
+	  // 🔄 Mostrar loading
+	  Swal.fire({
+		title: 'Guardando paciente...',
+		html: 'Por favor espera un momento.',
+		allowOutsideClick: false,
+		allowEscapeKey: false,
+		didOpen: () => {
+		  Swal.showLoading();
+		}
+	  });
+
+	  try {
+		const response = await fetch(url, {
+		  method: method,
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify(paciente)
+		});
+
+		if (response.ok) {
+		  const encargado = {
+			rut_paciente: rutPaciente,
+			rut: document.getElementById("rut_encargado").value.trim(),
+			nombre: document.getElementById("nombre_encargado").value.trim(),
+			telefono: document.getElementById("telefono_encargado").value.trim(),
+			correo: document.getElementById("correo_encargado").value.trim(),
+			direccion: document.getElementById("direccionEncargado").value.trim(),
+			comuna: document.getElementById("comunaEncargado").value.trim(),
+			parentesco: document.getElementById("parentescoEncargado").value
+		  };
+
+		  if (encargado.rut && encargado.nombre) {
+			const resEncargado = await fetch("/api/encargados/crear", {
+			  method: "POST",
+			  headers: { "Content-Type": "application/json" },
+			  body: JSON.stringify(encargado),
+			});
+
+			if (!resEncargado.ok) {
+			  const errorEnc = await resEncargado.json();
+			  Swal.close();
+			  alert("⚠️ El paciente fue guardado, pero hubo un problema al guardar el encargado: " + (errorEnc.detail || "Error desconocido."));
+			}
+		  }
+
+		  Swal.close(); // cerrar loading
+
+		  // ✅ Mostrar mensaje final con confirmación para agregar tratamiento
+		  Swal.fire({
+			title: "✅ Paciente guardado correctamente.",
+			text: "¿Deseas crear el tratamiento ahora?",
+			icon: "success",
+			showCancelButton: true,
+			confirmButtonText: "Crear Tratamiento",
+			cancelButtonText: "Volver al Listado de Pacientes"
+		  }).then((result) => {
+			if (result.isConfirmed) {
+			  localStorage.setItem("rutPacienteTratamiento", rutPaciente);
+			  window.location.href = "/tratamiento-paciente";
+			} else {
+			  window.location.href = "/listado-pacientes";
+			}
+		  });
+
+		} else {
+		  Swal.close();
+		  const error = await response.json();
+		  alert("❌ Error al guardar el paciente: " + (error.detail || "Error desconocido."));
+		}
+
+	  } catch (error) {
+		Swal.close();
+		console.error("❌ Error de conexión:", error);
+		alert("❌ Error de conexión con el servidor.");
+	  }
+	});
+
+
+  function irATratamiento() {
+    const rut = document.getElementById("rutPaciente").value;
+    if (rut) {
+      localStorage.setItem("rutPacienteTratamiento", rut);
+      window.location.href = "/tratamiento";
+    } else {
+      alert("⚠️ No se encontró el RUT del paciente.");
+    }
+  }
+</script>
+
+<div id="modalConfirmacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; max-width: 400px; width: 100%;">
+    <p style="font-size: 18px; font-weight: bold; color: #01485E;">✅ Paciente guardado correctamente.</p>
+    <p style="font-size: 16px;">¿Desea agregar el tratamiento del paciente ahora?</p>
+    <div style="margin-top: 20px; display: flex; justify-content: space-around;">
+      <button id="btnSiTratamiento" style="padding: 10px 20px; background-color: #28a745; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">Sí</button>
+      <button id="btnNoTratamiento" style="padding: 10px 20px; background-color: #dc3545; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">No</button>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>
