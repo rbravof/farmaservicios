@@ -1,13 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Setup Inicial</title>
+    <meta charset="UTF-8">
+    <title>Setup Inicial</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 60px; background: #f2f2f2; }
+        h1 { color: #01485E; margin-bottom: 20px; }
+        button {
+            background-color: #C02B2A;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        button:hover {
+            background-color: #a62323;
+        }
+    </style>
 </head>
 <body>
-  <h2>Setup Inicial</h2>
-  <form action="/setup-inicial" method="post">
-    <button type="submit">Crear Farmacia, Sucursal y Admin</button>
-  </form>
+    <h1>Setup Inicial</h1>
+    <p>Este proceso creará la farmacia principal, una sucursal y un usuario administrador.</p>
+    <button onclick="ejecutarSetup()">Crear Farmacia, Sucursal y Admin</button>
+
+    <script>
+        async function ejecutarSetup() {
+            const respuesta = await fetch('/setup-inicial', {
+                method: 'POST'
+            });
+
+            const datos = await respuesta.json();
+            alert(datos.mensaje);
+        }
+    </script>
 </body>
 </html>
