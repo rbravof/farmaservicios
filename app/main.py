@@ -18,7 +18,7 @@ import psycopg2
 from app.database import Base, get_db
 from app.models import Paciente, Tratamiento, Usuario, Farmacia, Sucursal, HistTratamiento
 from app.schemas import PacienteCreate, PacienteResponse, TratamientoCreate, UsuarioLogin
-from app.utils.security import verificar_contraseña
+from app.utils.security import verificar_contraseña, hashear_contrasena
 import app.routers.reporte_vencimientos_diario
 
 # Routers
@@ -308,7 +308,7 @@ def setup_inicial(db: Session = Depends(get_db)):
         admin = Usuario(
             nombre="Administrador",
             usuario="admin",
-            contrasena="admin123",  # Recuerda luego hashearla
+            contrasena=hashear_contrasena("admin123"),  # ← ¡seguro!
             rol="admin",
             id_sucursal=sucursal.id_sucursal
         )
