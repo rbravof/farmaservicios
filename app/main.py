@@ -9,13 +9,14 @@ from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 from datetime import datetime
 from app.routers import farmacias, usuarios
+
 import os
 import shutil
 import psycopg2
 
 # Importaciones locales
 from app.database import Base, get_db
-from app.models import Paciente, Tratamiento, Usuario, Farmacia, Sucursal
+from app.models import Paciente, Tratamiento, Usuario, Farmacia, Sucursal, HistTratamiento
 from app.schemas import PacienteCreate, PacienteResponse, TratamientoCreate, UsuarioLogin
 from app.utils.security import verificar_contraseña
 import app.routers.reporte_vencimientos_diario
