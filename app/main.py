@@ -297,7 +297,7 @@ def setup_inicial(db: Session = Depends(get_db)):
             nombre="Sucursal Central",
             direccion="Dirección Central",
             telefono="123456789",
-            correo="sucursal@farmacia.cl"
+            correo_sucursal="sucursal@farmacia.cl"
         )
         db.add(sucursal)
         db.commit()
