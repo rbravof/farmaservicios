@@ -263,6 +263,11 @@ async def mostrar_formulario_pacientes_unificado(request: Request):
 def mostrar_tratamiento(request: Request):
     return templates.TemplateResponse("tratamiento_paciente.html", {"request": request})
 
+@app.get("/setup-inicial", response_class=HTMLResponse)
+def mostrar_setup_inicial(request: Request):
+    return templates.TemplateResponse("setup_inicial.html", {"request": request})
+
+
 @app.post("/setup-inicial")
 def setup_inicial(db: Session = Depends(get_db)):
     # Verificar si ya existe una farmacia
