@@ -40,7 +40,7 @@ from app.routers import (
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 app = FastAPI()
@@ -65,7 +65,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Routers API
 # Routers API
-#app.include_router(usuarios.router, prefix="/api/usuarios")
+
 app.include_router(usuarios.router, prefix="/api/usuarios", tags=["usuarios"])
 app.include_router(administracion.router, prefix="/api/administracion")
 app.include_router(catalogo.router)
@@ -123,26 +123,37 @@ def login(usuario_login: UsuarioLogin, db: Session = Depends(get_db)):
 
 
 def mover_tratamientos_a_historial():
-    conn = get_db()
-    cursor = conn.cursor()
+    db: Session = SessionLocal()
+    try:
+        # 1. Obtener tratamientos vencidos sin estado o con estado vacío
+        tratamientos_vencidos = db.query(Tratamiento).filter(
+            Tratamiento.fecha_fin < datetime.today(),
+            (Tratamiento.estado == None) | (Tratamiento.estado == "")
+        ).all()
 
-    cursor.execute("""
-        SELECT id, rut_paciente, nombre_medicamento, fecha_inicio, fecha_fin, dosis
-        FROM tratamientos
-        WHERE fecha_fin < CURRENT_DATE AND (estado IS NULL OR estado = '')
-    """)
-    vencidos = cursor.fetchall()
+        for t in tratamientos_vencidos:
+            # 2. Crear entrada en historial
+            hist = HistTratamiento(
+                id_tratamiento=t.id,
+                rut_paciente=t.rut_paciente,
+                nombre_medicamento=t.nombre_medicamento,
+                fecha_inicio=t.fecha_inicio,
+                fecha_fin=t.fecha_fin,
+                dosis=t.dosis,
+                estado="No Compra",
+                fecha_movimiento=datetime.now()
+            )
+            db.add(hist)
 
-    for t in vencidos:
-        cursor.execute("""
-            INSERT INTO hist_tratamientos (id_tratamiento, rut_paciente, nombre_medicamento, fecha_inicio, fecha_fin, dosis, estado, fecha_movimiento)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (t[0], t[1], t[2], t[3], t[4], t[5], "No Compra", datetime.now()))
+            # 3. Marcar tratamiento original como "No Compra"
+            t.estado = "No Compra"
 
-        cursor.execute("UPDATE tratamientos SET estado = 'No Compra' WHERE id = %s", (t[0],))
-
-    conn.commit()
-    cursor.close()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error al mover tratamientos a historial: {e}")
+    finally:
+        db.close()
 
 # Scheduler
 scheduler = BackgroundScheduler()
@@ -252,7 +263,54 @@ async def mostrar_formulario_pacientes_unificado(request: Request):
 def mostrar_tratamiento(request: Request):
     return templates.TemplateResponse("tratamiento_paciente.html", {"request": request})
 
-    
+@app.post("/setup-inicial")
+def setup_inicial(db: Session = Depends(get_db)):
+    # Verificar si ya existe una farmacia
+    if db.query(Farmacia).first():
+        return {"mensaje": "Ya hay registros, no se puede ejecutar nuevamente."}
+
+    # Crear farmacia
+    farmacia = Farmacia(
+        rut="99999999-9",
+        razon_social="Farmacia Central",
+        direccion="Dirección de ejemplo",
+        region="Región Metropolitana",
+        comuna="Santiago",
+        telefono="123456789",
+        correo="admin@farmacia.cl"
+    )
+    db.add(farmacia)
+    db.commit()
+    db.refresh(farmacia)
+
+    # Crear sucursal
+    sucursal = Sucursal(
+        id_farmacia=farmacia.id,
+        nombre="Sucursal Central",
+        direccion="Dirección Central",
+        telefono="123456789",
+        correo="sucursal@farmacia.cl"
+    )
+    db.add(sucursal)
+    db.commit()
+    db.refresh(sucursal)
+
+    # Crear usuario admin
+    admin = Usuario(
+        nombre="Administrador",
+        usuario="admin",
+        contrasena="admin123",  # Puedes luego hashearla
+        rol="admin",
+        id_sucursal=sucursal.id_sucursal
+    )
+    db.add(admin)
+    db.commit()
+
+    return {"mensaje": "✅ Setup inicial completado con éxito"}
+
+
+
+
 # -----------------------
 # Crear Tablas
 # -----------------------

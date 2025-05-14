@@ -160,15 +160,12 @@ class Contacto(Base):
 class HistTratamiento(Base):
     __tablename__ = "hist_tratamientos"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_tratamiento = Column(Integer, nullable=False)
     rut_paciente = Column(String, nullable=False)
     nombre_medicamento = Column(String, nullable=False)
-    fecha_inicio = Column(Date, nullable=False)  # 👈 ESTA LÍNEA ES OBLIGATORIA
+    fecha_inicio = Column(Date, nullable=False)
     fecha_fin = Column(Date, nullable=False)
-    estado = Column(String, nullable=False)
-    fecha_historico = Column(DateTime, default=datetime.now, nullable=False)
-    codigo_barra = Column(String)
-    dosis_diaria = Column(Integer)
-    cantidad_por_caja = Column(Integer)
-    fecha_fin_real = Column(Date)
-
+    dosis = Column(String, nullable=False)
+    estado = Column(String, default="No Compra")
+    fecha_movimiento = Column(DateTime, default=datetime.utcnow)
